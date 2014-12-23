@@ -31,17 +31,12 @@
                 FB._dw.document.write('<html><head><title>Frame Buffers</title></head><body></body></html>');
                 FB._dw.document.close();
             }
-            this._dcv1 = FB._dw.document.createElement('canvas');
-            this._dcv1.width = (w / 2) | 0;
-            this._dcv1.height = (h / 2) | 0;
-            this._dcx1 = this._dcv1.getContext('2d');
-            FB._dw.document.body.appendChild(this._dcv1);
-            this._dcv2 = FB._dw.document.createElement('canvas');
-            this._dcv2.width = (w / 2) | 0;
-            this._dcv2.height = (h / 2) | 0;
-            this._dcx2 = this._dcv2.getContext('2d');
-            FB._dw.document.body.appendChild(this._dcv2);
-            FB._dw.document.body.appendChild(FB._dw.document.createElement('br'));
+            this._dcv = FB._dw.document.createElement('canvas');
+            this._dcv.style.display = 'block';
+            this._dcv.width = (w / 2) | 0;
+            this._dcv.height = (h / 2) | 0;
+            this._dcx = this._dcv.getContext('2d');
+            FB._dw.document.body.appendChild(this._dcv);
         }
     }
     FB.prototype.clear = function() {
@@ -51,10 +46,8 @@
         this._cx.clearRect(0, 0, this._cv.width, this._cv.height);
         this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
         if (debugging) {
-            this._dcx1.clearRect(0, 0, this._dcv1.width, this._dcv1.height);
-            this._dcx1.drawImage(this._cv, 0, 0, this._dcv1.width, this._dcv1.height);
-            this._dcx2.clearRect(0, 0, this._dcv2.width, this._dcv2.height);
-            this._dcx2.drawImage(this.cv, 0, 0, this._dcv2.width, this._dcv2.height);
+            this._dcx.clearRect(0, 0, this._dcv.width, this._dcv.height);
+            this._dcx.drawImage(this.cv, 0, 0, this._dcv.width, this._dcv.height);
         }
     };
     FB.clear = function() {
@@ -100,7 +93,7 @@
     scene.fb3 = new FB(640, 480, 'Layer 3');
 
     function debug(fb) {
-        fb.cx.fillStyle = 'rgba(255,255,255,0.25)';
+        fb.cx.fillStyle = 'rgba(255,255,255,0.5)';
         fb.cx.fillRect(0, 0, 40, 40);
         fb.cx.fillStyle = 'black';
         fb.cx.font = '15pt Arial';
@@ -115,15 +108,19 @@
         if (1 < a) {
             a = 1;
         }
+        if (curtain._raise) {
+            a = 1 - a;
+        }
         fb.cx.fillStyle = 'rgba(0,0,0,' + a + ')';
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
     }
-    curtain.reset = function() {
+    curtain.reset = function(raise) {
+        curtain._raise = raise;
         curtain._ts = tick.ts;
     };
 
-    function encounter() {
-        var scale = tick.ts - encounter._ts;
+    function enter() {
+        var scale = tick.ts - enter._ts;
         if (2000 <= scale) {
             scale = Math.pow(2, -6);
         } else {
@@ -131,7 +128,7 @@
         }
         var w = Math.floor(scene.fb1.cv.width * scale);
         var h = Math.floor(scene.fb1.cv.height * scale);
-        scene.fb1.cx.drawImage(encounter.cv, 0, 0, w, h);
+        scene.fb1.cx.drawImage(enter._cv, 0, 0, w, h);
         scene.fb1.cx.drawImage(
             scene.fb1.cv,
             0, 0, w, h,
@@ -142,11 +139,34 @@
         if (debugging) {
             debug(scene.fb3);
         }
+        if (2000 <= tick.ts - enter._ts) {
+            leave.reset();
+            scene.run = leave;
+        }
     }
-    encounter.reset = function() {
-        encounter._ts = tick.ts;
+    enter.reset = function(cv) {
+        enter._cv = cv;
+        enter._ts = tick.ts;
         scene.fb2.clear();
-        curtain.reset();
+        curtain.reset(false);
+    };
+
+    function leave() {
+        scene.fb3.clear();
+        curtain(scene.fb3);
+        if (debugging) {
+            debug(scene.fb3);
+        }
+        if (2000 <= tick.ts - leave._ts) {
+            FB.hide();
+            scene.run = undefined;
+        }
+    }
+    leave.reset = function() {
+        leave._ts = tick.ts;
+        scene.fb1.clear();
+        scene.fb2.clear();
+        curtain.reset(true);
     };
 
     function init(cv) {
@@ -157,9 +177,8 @@
         FB.resize();
         FB.clear();
         FB.show();
-        encounter.cv = cv;
-        encounter.reset();
-        scene.run = encounter;
+        enter.reset(cv);
+        scene.run = enter;
         scene();
     }
     document.addEventListener('click', function() {
