@@ -58,6 +58,36 @@
                 x += tile.w;
             }
         },
+        drawTextC: function(cx, x, y, sheet, txt) {
+            var i, start, end = -1, x0 = x;
+            while (end < txt.length) {
+                start = end + 1;
+                end = txt.length;
+                for (i = start; i < txt.length; i++) {
+                    if ('\n' === txt[i]) {
+                        end = i;
+                        break;
+                    }
+                }
+                x = x0 - (end - start) * 4;
+                for (i = start; i < end; i++) {
+                    var id = txt[i];
+                    if (' ' === id) {
+                        x += 8;
+                        continue;
+                    }
+                    var tile = sheet.tile[id];
+                    if (!tile) {
+                        var err = 'invalid id:' + id + ' txt:' + txt;
+                        console.log(err);
+                        throw new Exception(err);
+                    }
+                    cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, x, y, tile.w, tile.h);
+                    x += tile.w;
+                }
+                y += 8;
+            }
+        },
         drawTextR: function(cx, x, y, sheet, txt) {
             var i, start, end = -1, x0 = x;
             while (end < txt.length) {
@@ -455,7 +485,7 @@
         var sheet = sprite.sheet.hud;
         sprite.drawDialog(this._fb.cx, this._x, this._y, this._w, this._h, sheet);
         if (this.msgL && 0 < this.msgL.length) {
-            sprite.drawText(this._fb.cx, this._x + 8, this._y + 8, sheet, this.msgL);
+            sprite.drawTextC(this._fb.cx, (this._x + this._w / 2) | 0, this._y + 8, sheet, this.msgL);
         }
         if (this.msgR && 0 < this.msgR.length) {
             sprite.drawTextR(this._fb.cx, this._x + this._w - 8, this._y + 8, sheet, this.msgR);
