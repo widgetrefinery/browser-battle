@@ -1,5 +1,5 @@
 (function() {
-    var debugging = true;
+    var debug = true;
 
     function tick() {
         var ts = Date.now();
@@ -11,7 +11,34 @@
         tick.ts = Date.now();
     };
 
-    function FB(w, h, n) {
+    function queue() {
+        for (var i in queue._lst) {
+            if (tick.ts < queue._lst[i].ts) {
+                continue;
+            }
+            var dt = tick.ts - queue._lst[i].ts;
+            queue._lst[i](dt);
+            if (0 < queue._lst[i].dt && dt >= queue._lst[i].dt) {
+                delete queue._lst[i];
+                queue.size--;
+            }
+        }
+    }
+    queue.add = function(fn, ts, dt) {
+        fn.ts = tick.ts + ts;
+        fn.dt = dt;
+        var id = 'f' + queue._id++;
+        queue._lst[id] = fn;
+        queue.size++;
+        return id;
+    };
+    queue.reset = function() {
+        queue._id = 0;
+        queue._lst = [];
+        queue.size = 0;
+    };
+
+    function FB(w, h) {
         this._cv = document.createElement('canvas');
         this._cv.style.position = 'fixed';
         this._cv.style.left = 0;
@@ -24,10 +51,13 @@
         this.cx.mozImageSmoothingEnabled = false;
         this.cx.webkitImageSmoothingEnabled = false;
         this.cx.imageSmoothingEnabled = false;
-        FB._list.push(this);
-        if (debugging) {
+        FB._lst.push(this);
+        if (debug) {
             if (!FB._dw) {
                 FB._dw = window.open('', 'fb');
+                if (!FB._dw) {
+                    return;
+                }
                 FB._dw.document.write('<html><head><title>Frame Buffers</title></head><body></body></html>');
                 FB._dw.document.close();
             }
@@ -45,128 +75,135 @@
     FB.prototype.flush = function() {
         this._cx.clearRect(0, 0, this._cv.width, this._cv.height);
         this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
-        if (debugging) {
+        if (debug && this._dcv) {
             this._dcx.clearRect(0, 0, this._dcv.width, this._dcv.height);
             this._dcx.drawImage(this.cv, 0, 0, this._dcv.width, this._dcv.height);
         }
     };
     FB.clear = function() {
-        for (var i = 0; i < FB._list.length; i++) {
-            FB._list[i].clear();
+        for (var i = 0; i < FB._lst.length; i++) {
+            FB._lst[i].clear();
         }
     };
     FB.flush = function() {
-        for (var i = 0; i < FB._list.length; i++) {
-            FB._list[i].flush();
+        for (var i = 0; i < FB._lst.length; i++) {
+            FB._lst[i].flush();
         }
     };
     FB.show = function() {
-        for (var i = 0; i < FB._list.length; i++) {
-            document.body.appendChild(FB._list[i]._cv);
+        FB.resize();
+        FB.clear();
+        FB.flush();
+        for (var i = 0; i < FB._lst.length; i++) {
+            document.body.appendChild(FB._lst[i]._cv);
         }
     };
     FB.hide = function() {
-        for (var i = 0; i < FB._list.length; i++) {
-            document.body.removeChild(FB._list[i]._cv);
+        for (var i = 0; i < FB._lst.length; i++) {
+            document.body.removeChild(FB._lst[i]._cv);
         }
     };
     FB.resize = function() {
-        for (var i = 0; i < FB._list.length; i++) {
-            FB._list[i]._cv.width = window.innerWidth;
-            FB._list[i]._cv.height = window.innerHeight;
+        for (var i = 0; i < FB._lst.length; i++) {
+            FB._lst[i]._cv.width = window.innerWidth;
+            FB._lst[i]._cv.height = window.innerHeight;
         }
     };
-    FB._list = [];
+    FB._lst = [];
     window.addEventListener('resize', FB.resize);
 
     function scene() {
         if (!scene.run) {
+            FB.hide();
             return;
         }
         tick();
         scene.run();
+        queue();
+        if (debug) {
+            dc();
+        }
         FB.flush();
         requestAnimationFrame(scene);
     }
-    scene.fb1 = new FB(640, 480, 'Layer 1');
-    scene.fb2 = new FB(640, 480, 'Layer 2');
-    scene.fb3 = new FB(640, 480, 'Layer 3');
+    scene.fb1 = new FB(640, 480);
+    scene.fb2 = new FB(640, 480);
+    scene.fb3 = new FB(640, 480);
 
-    function debug(fb) {
-        fb.cx.fillStyle = 'rgba(255,255,255,0.5)';
-        fb.cx.fillRect(0, 0, 40, 40);
-        fb.cx.fillStyle = 'black';
-        fb.cx.font = '15pt Arial';
-        fb.cx.textBaseline = 'top';
+    function dc() {
+        var cx = scene.fb3.cx;
+        cx.fillStyle = 'rgba(255,255,255,0.5)';
+        cx.fillRect(0, 0, 40, 40);
+        cx.fillStyle = 'black';
+        cx.font = '15pt Arial';
+        cx.textBaseline = 'top';
 
         var fps = (1000 / tick.dt) | 0;
-        fb.cx.fillText(fps, 10, 10);
+        cx.fillText(fps, 10, 10);
     }
 
-    function curtain(fb) {
-        var a = (tick.ts - curtain._ts) / 2000;
+    function fadeAnim(dt) {
+        var a = dt / fadeAnim.dt;
         if (1 < a) {
             a = 1;
         }
-        if (curtain._raise) {
+        if (fadeAnim._in) {
             a = 1 - a;
         }
+        var fb = fadeAnim._fb;
         fb.cx.fillStyle = 'rgba(0,0,0,' + a + ')';
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
     }
-    curtain.reset = function(raise) {
-        curtain._raise = raise;
-        curtain._ts = tick.ts;
+    fadeAnim.reset = function(fb, fade_in) {
+        fadeAnim._fb = fb;
+        fadeAnim._in = fade_in;
     };
 
-    function enter() {
-        var scale = tick.ts - enter._ts;
-        if (2000 <= scale) {
-            scale = Math.pow(2, -6);
-        } else {
-            scale = Math.pow(2, -2 - scale / 500);
-        }
-        var w = Math.floor(scene.fb1.cv.width * scale);
-        var h = Math.floor(scene.fb1.cv.height * scale);
-        scene.fb1.cx.drawImage(enter._cv, 0, 0, w, h);
-        scene.fb1.cx.drawImage(
-            scene.fb1.cv,
+    function pixelateAnim(dt) {
+        var scale = Math.pow(2, -2 - 4 * dt / pixelateAnim.dt);
+        var fb = pixelateAnim._fb;
+        var w = Math.floor(fb.cv.width * scale);
+        var h = Math.floor(fb.cv.height * scale);
+        fb.cx.drawImage(pixelateAnim._cv, 0, 0, w, h);
+        fb.cx.drawImage(
+            fb.cv,
             0, 0, w, h,
-            0, 0, scene.fb1.cv.width, scene.fb1.cv.height
+            0, 0, fb.cv.width, fb.cv.height
         );
-        scene.fb3.clear();
-        curtain(scene.fb3);
-        if (debugging) {
-            debug(scene.fb3);
-        }
-        if (2000 <= tick.ts - enter._ts) {
-            leave.reset();
-            scene.run = leave;
+    }
+    pixelateAnim.reset = function(fb, cv) {
+        pixelateAnim._fb = fb;
+        pixelateAnim._cv = cv;
+    };
+
+    function enterScene() {
+        if (0 < queue.size) {
+            scene.fb3.clear();
+        } else {
+            leaveScene.reset();
+            scene.run = leaveScene;
         }
     }
-    enter.reset = function(cv) {
-        enter._cv = cv;
-        enter._ts = tick.ts;
+    enterScene.reset = function(cv) {
+        pixelateAnim.reset(scene.fb1, cv);
+        queue.add(pixelateAnim, 0, 2000);
+        fadeAnim.reset(scene.fb3, false);
+        queue.add(fadeAnim, 0, 2000);
         scene.fb2.clear();
-        curtain.reset(false);
     };
 
-    function leave() {
-        scene.fb3.clear();
-        curtain(scene.fb3);
-        if (debugging) {
-            debug(scene.fb3);
-        }
-        if (2000 <= tick.ts - leave._ts) {
-            FB.hide();
+    function leaveScene() {
+        if (0 < queue.size) {
+            scene.fb3.clear();
+        } else {
             scene.run = undefined;
         }
     }
-    leave.reset = function() {
-        leave._ts = tick.ts;
+    leaveScene.reset = function() {
+        fadeAnim.reset(scene.fb3, true);
+        queue.add(fadeAnim, 0, 1000);
         scene.fb1.clear();
         scene.fb2.clear();
-        curtain.reset(true);
     };
 
     function init(cv) {
@@ -174,11 +211,10 @@
             return;
         }
         tick.reset();
-        FB.resize();
-        FB.clear();
+        queue.reset();
         FB.show();
-        enter.reset(cv);
-        scene.run = enter;
+        enterScene.reset(cv);
+        scene.run = enterScene;
         scene();
     }
     document.addEventListener('click', function() {
