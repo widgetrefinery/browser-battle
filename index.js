@@ -80,6 +80,27 @@
                 y += 8;
             }
         },
+        drawDialog: function(cx, x, y, w, h, sheet, nw, nc, ne, cw, cc, ce, sw, sc, se) {
+            var y0 = y, w0 = w, h0 = h;
+            w -= nw.w + ne.w;
+            h -= nw.h + sw.h;
+            cx.drawImage(sheet.img, nw.x, nw.y, nw.w, nw.h, x, y, nw.w, nw.h);
+            cx.drawImage(sheet.img, nc.x, nc.y, nc.w, nc.h, x + nw.w, y, w, nc.h);
+            cx.drawImage(sheet.img, ne.x, ne.y, ne.w, ne.h, x + nw.w + w, y, ne.w, ne.h);
+            y += nw.h;
+            cx.drawImage(sheet.img, cw.x, cw.y, cw.w, cw.h, x, y, cw.w, h);
+            cx.drawImage(sheet.img, cc.x, cc.y, cc.w, cc.h, x + nw.w, y, w, h);
+            cx.drawImage(sheet.img, ce.x, ce.y, ce.w, ce.h, x + nw.w + w, y, ce.w, h);
+            y += h;
+            cx.drawImage(sheet.img, sw.x, sw.y, sw.w, sw.h, x, y, sw.w, sw.h);
+            cx.drawImage(sheet.img, sc.x, sc.y, sc.w, sc.h, x + nw.w, y, w, sc.h);
+            cx.drawImage(sheet.img, se.x, se.y, se.w, se.h, x + nw.w + w, y, se.w, se.h);
+            var g = cx.createLinearGradient(x, y0, x, y0 + h0);
+            g.addColorStop(0.2, 'rgba(200,200,200,0.25)');
+            g.addColorStop(0.8, 'rgba(0,0,0,0.25)');
+            cx.fillStyle = g;
+            cx.fillRect(x, y0, w0, h0);
+        },
         _util: {
             flipH: function(buf) {
                 for (var y = 0; y < buf.data.length; y += buf.width * 4) {
@@ -109,16 +130,16 @@
             hud: {
                 img: document.createElement('img'),
                 tile: {
-                    menu_nw:    {x:   0, y:   0, w:  8, h:  8},
-                    menu_nc:    {x:   8, y:   0, w: 16, h:  8},
-                    menu_ne:    {x:  24, y:   0, w:  8, h:  8},
-                    menu_cw:    {x:   0, y:   8, w:  8, h: 16},
-                    menu_cc:    {x:   8, y:   8, w: 16, h: 16},
-                    menu_ce:    {x:  24, y:   8, w:  8, h: 16},
-                    menu_sw:    {x:   0, y:  24, w:  8, h:  8},
-                    menu_sc:    {x:   8, y:  24, w: 16, h:  8},
-                    menu_se:    {x:  24, y:  24, w:  8, h:  8},
-                    hp_y_8:     {x: 120, y:  16, w:  8, h:  8},
+                    box_nw:     {x:   0, y:   0, w:  8, h:  8},
+                    box_nc:     {x:   8, y:   0, w: 16, h:  8},
+                    box_ne:     {x:  24, y:   0, w:  8, h:  8},
+                    box_cw:     {x:   0, y:   8, w:  8, h: 16},
+                    box_cc:     {x:   8, y:   8, w: 16, h: 16},
+                    box_ce:     {x:  24, y:   8, w:  8, h: 16},
+                    box_sw:     {x:   0, y:  24, w:  8, h:  8},
+                    box_sc:     {x:   8, y:  24, w: 16, h:  8},
+                    box_se:     {x:  24, y:  24, w:  8, h:  8},
+                    bar_y_8:    {x: 120, y:  16, w:  8, h:  8},
                     dmg_Miss:   {x: 112, y:  24, w: 16, h:  8},
                     dmg_g_Miss: {x:  80, y: 112, w: 16, h:  8},
                     dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8}
@@ -145,7 +166,7 @@
                     buf = cx.getImageData(32, 24, 96, 8);
                     sprite._util.mul(buf, 1, 0, 0, 1);
                     cx.putImageData(buf, 0, 120);
-                    // hp bar with green tint
+                    // bar with green tint
                     buf = cx.getImageData(96, 16, 24, 8);
                     sprite._util.mul(buf, 0, 1, 0, 1);
                     cx.putImageData(buf, 96, 112);
@@ -165,7 +186,7 @@
                     }
                     tiles = '012345678LR';
                     for (i = 0; i < tiles.length; i++) {
-                        id = 'hp_' + tiles[i];
+                        id = 'bar_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 16, w: 8, h: 8};
                     }
                     tiles = '0123456789';
@@ -336,12 +357,13 @@
             cx.textBaseline = 'top';
             cx.fillText(fps, 10, 10);
         } else {
-            var menu = [
-                'menu_nw', 'menu_nc', 'menu_ne', '\n',
-                'menu_cw', 'menu_cc', 'menu_ce', '\n',
-                'menu_sw', 'menu_sc', 'menu_se'
-            ];
-            sprite.drawText(cx, 0, 0, sprite.sheet.hud, menu);
+            var sheet = sprite.sheet.hud;
+            sprite.drawDialog(
+                cx, 0, 0, 32, 24, sheet,
+                sheet.tile.box_nw, sheet.tile.box_nc, sheet.tile.box_ne,
+                sheet.tile.box_cw, sheet.tile.box_cc, sheet.tile.box_ce,
+                sheet.tile.box_sw, sheet.tile.box_sc, sheet.tile.box_se
+            );
             sprite.drawText(cx, 8, 8, sprite.sheet.hud, '' + fps);
         }
     }
@@ -424,40 +446,21 @@
         this.msgR = msgR;
     };
     Menu.prototype.draw = function(dt) {
-        var hud = sprite.sheet.hud;
-        var nw = hud.tile.menu_nw, nc = hud.tile.menu_nc, ne = hud.tile.menu_ne;
-        var cw = hud.tile.menu_cw, cc = hud.tile.menu_cc, ce = hud.tile.menu_ce;
-        var sw = hud.tile.menu_sw, sc = hud.tile.menu_sc, se = hud.tile.menu_se;
-        var cx = this._fb.cx;
-        var mx = this._x + this._w - ne.w;
-        var my = this._y + this._h - sw.h;
-        var x, y;
-
-        cx.drawImage(hud.img, nw.x, nw.y, nw.w, nw.h, this._x, this._y, nw.w, nw.h);
-        for (x = this._x + nw.w; x < mx; x += nc.w) {
-            cx.drawImage(hud.img, nc.x, nc.y, nc.w, nc.h, x, this._y, nc.w, nc.h);
-        }
-        cx.drawImage(hud.img, ne.x, ne.y, ne.w, ne.h, x, this._y, ne.w, ne.h);
-
-        for (y = this._y + nw.h; y < my; y += cw.h) {
-            cx.drawImage(hud.img, cw.x, cw.y, cw.w, cw.h, this._x, y, cw.w, cw.h);
-            for (x = this._x + nw.w; x < mx; x += nc.w) {
-                cx.drawImage(hud.img, cc.x, cc.y, cc.w, cc.h, x, y, cc.w, cc.h);
-            }
-            cx.drawImage(hud.img, ce.x, ce.y, ce.w, ce.h, x, y, ce.w, ce.h);
-        }
-
-        cx.drawImage(hud.img, sw.x, sw.y, sw.w, sw.h, this._x, y, sw.w, sw.h);
-        for (x = this._x + nw.w; x < mx; x += nc.w) {
-            cx.drawImage(hud.img, sc.x, sc.y, sc.w, sc.h, x, y, sc.w, sc.h);
-        }
-        cx.drawImage(hud.img, se.x, se.y, se.w, se.h, x, y, se.w, se.h);
-
+        var sheet = sprite.sheet.hud;
+        sprite.drawDialog(
+            this._fb.cx,
+            this._x, this._y,
+            this._w, this._h,
+            sheet,
+            sheet.tile.box_nw, sheet.tile.box_nc, sheet.tile.box_ne,
+            sheet.tile.box_cw, sheet.tile.box_cc, sheet.tile.box_ce,
+            sheet.tile.box_sw, sheet.tile.box_sc, sheet.tile.box_se
+        );
         if (this.msgL && 0 < this.msgL.length) {
-            sprite.drawText(cx, this._x + 8, this._y + 8, hud, this.msgL);
+            sprite.drawText(this._fb.cx, this._x + 8, this._y + 8, sheet, this.msgL);
         }
         if (this.msgR && 0 < this.msgR.length) {
-            sprite.drawTextR(cx, this._x + this._w - 8, this._y + 8, hud, this.msgR);
+            sprite.drawTextR(this._fb.cx, this._x + this._w - 8, this._y + 8, sheet, this.msgR);
         }
     };
     Menu.get = function(fb, x, y, w, h, msgL, msgR) {
@@ -487,7 +490,7 @@
         battleBgAnim.reset(scene.fb1);
         queue.add(battleBgAnim, 0, 2000);
         var msgL = 'h,e,l,l,o, ,w,o,r,l,d,\n,\n,y_f,y_o,y_o,y_ ,y_b,y_a,y_r'.split(',');
-        var msgR = '7,7,hp_L,hp_8,hp_8,hp_3,hp_R,\n,\n,8,0,hp_L,hp_y_8,hp_y_8,hp_y_8,hp_R'.split(',');
+        var msgR = '7,7,bar_L,bar_8,bar_8,bar_3,bar_R,\n,\n,8,0,bar_L,bar_y_8,bar_y_8,bar_y_8,bar_R'.split(',');
         var menu = Menu.get(scene.fb3, 0, scene.fb3.cv.height - 48, scene.fb3.cv.width, 48, msgL, msgR);
         queue.add(menu, 0, -1);
         fadeAnim.reset(scene.fb3, true);
