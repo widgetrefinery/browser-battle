@@ -1,5 +1,6 @@
 (function() {
     var debug = true;
+    var pending = 0;
 
     var dw = function() {
         if (!debug) {
@@ -79,7 +80,6 @@
                 y += 8;
             }
         },
-        pending: 0,
         _util: {
             flipH: function(buf) {
                 for (var y = 0; y < buf.data.length; y += buf.width * 4) {
@@ -106,7 +106,7 @@
             }
         },
         sheet: {
-            ff: {
+            hud: {
                 img: document.createElement('img'),
                 tile: {
                     menu_nw:    {x:   0, y:   0, w:  8, h:  8},
@@ -128,7 +128,7 @@
                     cv.width = 128;
                     cv.height = 72 + 56;
                     var cx = cv.getContext('2d');
-                    cx.drawImage(sprite.sheet.ff.img, 0, 0, 128, 72, 0, 0, 128, 72);
+                    cx.drawImage(sprite.sheet.hud.img, 0, 0, 128, 72, 0, 0, 128, 72);
                     // flipped cursor
                     var buf = cx.getImageData(32, 0, 16, 16);
                     sprite._util.flipH(buf);
@@ -150,7 +150,7 @@
                     sprite._util.mul(buf, 0, 1, 0, 1);
                     cx.putImageData(buf, 96, 112);
                     // install new canvas
-                    sprite.sheet.ff.img = cv;
+                    sprite.sheet.hud.img = cv;
                     if (debug) {
                         var dcv = dw.cv(cv.width, cv.height);
                         if (dcv) {
@@ -161,42 +161,43 @@
                     var i, j, id, tiles = 'cur,sel_0,sel_1,sel_2,cur_R'.split(',');
                     for (i = 0; i < tiles.length; i++) {
                         id = 'icon_' + tiles[i];
-                        sprite.sheet.ff.tile[id] = {x: 32 + 16 * i, y: 0, w: 16, h: 16};
+                        sprite.sheet.hud.tile[id] = {x: 32 + 16 * i, y: 0, w: 16, h: 16};
                     }
                     tiles = '012345678LR';
                     for (i = 0; i < tiles.length; i++) {
                         id = 'hp_' + tiles[i];
-                        sprite.sheet.ff.tile[id] = {x: 32 + 8 * i, y: 16, w: 8, h: 8};
+                        sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 16, w: 8, h: 8};
                     }
                     tiles = '0123456789';
                     for (i = 0; i < tiles.length; i++) {
                         id = 'dmg_' + tiles[i];
-                        sprite.sheet.ff.tile[id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
+                        sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
                     }
                     tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()=~ '];
                     for (i = 0; i < tiles.length; i++) {
                         for (j = 0; j < tiles[i].length; j++) {
                             id = tiles[i][j];
-                            sprite.sheet.ff.tile[id] = {x: 8 * j, y: 32 + 8 * i, w: 8, h: 8};
-                            sprite.sheet.ff.tile['y_' + id] = {x: 8 * j, y: 72 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile[id] = {x: 8 * j, y: 32 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['y_' + id] = {x: 8 * j, y: 72 + 8 * i, w: 8, h: 8};
                         }
                     }
                     tiles = '0123456789';
                     for (i = 0; i < tiles.length; i++) {
                         id = tiles[i];
-                        sprite.sheet.ff.tile['dmg_g_' + id] = {x: 8 * i, y: 112, w: 8, h: 8};
-                        sprite.sheet.ff.tile['dmg_r_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 8 * i, y: 112, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
                     }
+                    pending--;
                 }
             }
         }
     };
-    sprite.sheet.ff.img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABIBAMAAADMq+AhAAAAMFBMVEUBAAAAAAAYGCgoMDAoKIAwMIhQUFBwcHCAgIB4mJigsLCgwMDI4OD4+ADw+Pj4+Phd7QUbAAAAAXRSTlMAQObYZgAABQZJREFUWMO1Vj1vIzcQ5W6TkmSVchfbCQa2MQykSOnr0sUCUqRzYwRXJJV/gJorXLkTAqR2kSrdwcCVwcHwX0ijNoCw/AXMvPng0spG5w+EwojcFedxZt7MUG599TiPz5dr59qhdy8YPzx+mMfN3ZlzJ/vblwC8v7s8LePq4dK1v31cDcPzAW42Z2sbF6c3m7b9tL+/v3++Fw+XF+c23q3fb1arPcYthYIGcDAP1XwwPp+dz+Pdt5vx10/7v7fb3p2QHfd/UEy3GL1rGbj/AsB3m5HUPuKkVvScG0lvR/OJAB4FOP+RLLB9o+jx0QBql0NzCHCyJQtuVVH2n+jBq+0Sv4cAK7OcFNXgVg9ut/1zAFYFoLX9w8F8FKCl4L0oEw8BhP/h9QCDjrcC9K934UXaSwAvHYcA188YpKZfNL3Ogq+ur38+4kIgiRBaxAgJJBESIhbuOjTXeE/rJYCJJENokTNkIsmQKWPhfgnN1879ReP/seBNMXg7C8hiaYEi9NAit4Z55jV9Flsa2ki75xbYc0uhB/QmrG3mdT8ObU9gD08A3m/GHX1Ij2f6UGfrx90AKe/ksx9JendTt/WLGwZoFaAd6LQdn8zSDqNYwofsh3GgpvnTn9XFQjeTAbAyKYw2w5pBlAlkN2LAgm9+ry7Xx7vTAjDu7KTd7M7OCRCARzJg7N33V9Xl+uHyTIK1cyVggwSNA0q6VRDFgvXpk7EWuvqZMjfMlKLNzjS2zILPOVB6B5tJEoSfg09cDM4nrDOldsKaJtvvcuySSLQ5qrCS61IQAHyosAIdMLlkek6QBX2eTTwOFAt4LyozJzIhmZ4oZUPXNT+LKwUA1sIFQkp+qgDgc20BlSxLUBPtELUgRZ9olewwiYEApKcu6AkGoDHAi2RBRWswpK5mgTZ2MwvB1uw/A7jUqdvUdRpuLI10HO4y6ET8TL+hHdk6lp0uyjv3NA98iQedks015duJazJ05TkGhf/UdCkuAUS8zRJEzOw45swx0OAl6qN+zgsA+NhJ6Og9oMEqHSZZGy0TAZAV8QDAIQ1y4k1FCQypcqwtaDo56dACmIlcEhpLOgelEJJYYXK54twHi4HTDJwBfJmd8s2BA68AEFY4Q0MBKNUqLnlzOTPfFHrimNltLB/0JuI84HWw941kAj0HuboKq8yRURWOX0z1795Sks0JBUwuUzZZZ9rXZZoncY+uX9bMyi/fpmyBcdtN/FstKXIeEH0zJ0KJhhoAXVJuuzRHfqawU+7LG6mqCkDr+b8AGo1+edPEA4AlCywG3FBkr/yS5IUBSNcpMWAADmK0g+BCwpfmhb6g/x0BnII+IT5oXxC+rZilT8iX5MUCxV4rTPsEbJdZn7VvBCkQo6v4CkaoiPAeGRql1NBkfcKJ3XwfIO0x18GKUfK/YVekoXoDZjd8qpttw40CZZs1eFqNVToGPPDJyq+1Prkvqmh32ehRACQMKWp1zHcEzY2uWQyg4aJ2BQDryWkrn68xp7tQklw7Wvc5TE587bTWoYg1rtkSec1ca38sUvcxcD5o3esdIT3CResBXP9l3agQjPAuRr5mSO4vAfBz8nwj4u/38gFeWlMzdaFZAGDKAOAn/gvv82G7SoaTGKvewG4mtHbwjk18Z8Ll9MSAusfxBjcHmV2IlMcKwL/xjVIbcGCVr1j6ogv8FP8N0BTpgjRMCaJZeHTAd44H/4Fojir8AyqNSwYgbVTDAAAAAElFTkSuQmCC';
-    sprite.pending++;
-    if (sprite.sheet.ff.img.complete) {
-        sprite.sheet.ff.init();
+    sprite.sheet.hud.img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABIBAMAAADMq+AhAAAAMFBMVEUBAAAAAAAYGCgoMDAoKIAwMIhQUFBwcHCAgIB4mJigsLCgwMDI4OD4+ADw+Pj4+Phd7QUbAAAAAXRSTlMAQObYZgAABQZJREFUWMO1Vj1vIzcQ5W6TkmSVchfbCQa2MQykSOnr0sUCUqRzYwRXJJV/gJorXLkTAqR2kSrdwcCVwcHwX0ijNoCw/AXMvPng0spG5w+EwojcFedxZt7MUG599TiPz5dr59qhdy8YPzx+mMfN3ZlzJ/vblwC8v7s8LePq4dK1v31cDcPzAW42Z2sbF6c3m7b9tL+/v3++Fw+XF+c23q3fb1arPcYthYIGcDAP1XwwPp+dz+Pdt5vx10/7v7fb3p2QHfd/UEy3GL1rGbj/AsB3m5HUPuKkVvScG0lvR/OJAB4FOP+RLLB9o+jx0QBql0NzCHCyJQtuVVH2n+jBq+0Sv4cAK7OcFNXgVg9ut/1zAFYFoLX9w8F8FKCl4L0oEw8BhP/h9QCDjrcC9K934UXaSwAvHYcA188YpKZfNL3Ogq+ur38+4kIgiRBaxAgJJBESIhbuOjTXeE/rJYCJJENokTNkIsmQKWPhfgnN1879ReP/seBNMXg7C8hiaYEi9NAit4Z55jV9Flsa2ki75xbYc0uhB/QmrG3mdT8ObU9gD08A3m/GHX1Ij2f6UGfrx90AKe/ksx9JendTt/WLGwZoFaAd6LQdn8zSDqNYwofsh3GgpvnTn9XFQjeTAbAyKYw2w5pBlAlkN2LAgm9+ry7Xx7vTAjDu7KTd7M7OCRCARzJg7N33V9Xl+uHyTIK1cyVggwSNA0q6VRDFgvXpk7EWuvqZMjfMlKLNzjS2zILPOVB6B5tJEoSfg09cDM4nrDOldsKaJtvvcuySSLQ5qrCS61IQAHyosAIdMLlkek6QBX2eTTwOFAt4LyozJzIhmZ4oZUPXNT+LKwUA1sIFQkp+qgDgc20BlSxLUBPtELUgRZ9olewwiYEApKcu6AkGoDHAi2RBRWswpK5mgTZ2MwvB1uw/A7jUqdvUdRpuLI10HO4y6ET8TL+hHdk6lp0uyjv3NA98iQedks015duJazJ05TkGhf/UdCkuAUS8zRJEzOw45swx0OAl6qN+zgsA+NhJ6Og9oMEqHSZZGy0TAZAV8QDAIQ1y4k1FCQypcqwtaDo56dACmIlcEhpLOgelEJJYYXK54twHi4HTDJwBfJmd8s2BA68AEFY4Q0MBKNUqLnlzOTPfFHrimNltLB/0JuI84HWw941kAj0HuboKq8yRURWOX0z1795Sks0JBUwuUzZZZ9rXZZoncY+uX9bMyi/fpmyBcdtN/FstKXIeEH0zJ0KJhhoAXVJuuzRHfqawU+7LG6mqCkDr+b8AGo1+edPEA4AlCywG3FBkr/yS5IUBSNcpMWAADmK0g+BCwpfmhb6g/x0BnII+IT5oXxC+rZilT8iX5MUCxV4rTPsEbJdZn7VvBCkQo6v4CkaoiPAeGRql1NBkfcKJ3XwfIO0x18GKUfK/YVekoXoDZjd8qpttw40CZZs1eFqNVToGPPDJyq+1Prkvqmh32ehRACQMKWp1zHcEzY2uWQyg4aJ2BQDryWkrn68xp7tQklw7Wvc5TE587bTWoYg1rtkSec1ca38sUvcxcD5o3esdIT3CResBXP9l3agQjPAuRr5mSO4vAfBz8nwj4u/38gFeWlMzdaFZAGDKAOAn/gvv82G7SoaTGKvewG4mtHbwjk18Z8Ll9MSAusfxBjcHmV2IlMcKwL/xjVIbcGCVr1j6ogv8FP8N0BTpgjRMCaJZeHTAd44H/4Fojir8AyqNSwYgbVTDAAAAAElFTkSuQmCC';
+    pending++;
+    if (sprite.sheet.hud.img.complete) {
+        sprite.sheet.hud.init();
     } else {
-        sprite.sheet.ff.img.addEventListener('load', sprite.sheet.ff.init);
+        sprite.sheet.hud.img.addEventListener('load', sprite.sheet.hud.init);
     }
 
     function tick() {
@@ -340,8 +341,8 @@
                 'menu_cw', 'menu_cc', 'menu_ce', '\n',
                 'menu_sw', 'menu_sc', 'menu_se'
             ];
-            sprite.drawText(cx, 0, 0, sprite.sheet.ff, menu);
-            sprite.drawText(cx, 8, 8, sprite.sheet.ff, '' + fps);
+            sprite.drawText(cx, 0, 0, sprite.sheet.hud, menu);
+            sprite.drawText(cx, 8, 8, sprite.sheet.hud, '' + fps);
         }
     }
 
@@ -423,40 +424,40 @@
         this.msgR = msgR;
     };
     Menu.prototype.draw = function(dt) {
-        var ff = sprite.sheet.ff;
-        var nw = ff.tile.menu_nw, nc = ff.tile.menu_nc, ne = ff.tile.menu_ne;
-        var cw = ff.tile.menu_cw, cc = ff.tile.menu_cc, ce = ff.tile.menu_ce;
-        var sw = ff.tile.menu_sw, sc = ff.tile.menu_sc, se = ff.tile.menu_se;
+        var hud = sprite.sheet.hud;
+        var nw = hud.tile.menu_nw, nc = hud.tile.menu_nc, ne = hud.tile.menu_ne;
+        var cw = hud.tile.menu_cw, cc = hud.tile.menu_cc, ce = hud.tile.menu_ce;
+        var sw = hud.tile.menu_sw, sc = hud.tile.menu_sc, se = hud.tile.menu_se;
         var cx = this._fb.cx;
         var mx = this._x + this._w - ne.w;
         var my = this._y + this._h - sw.h;
         var x, y;
 
-        cx.drawImage(ff.img, nw.x, nw.y, nw.w, nw.h, this._x, this._y, nw.w, nw.h);
+        cx.drawImage(hud.img, nw.x, nw.y, nw.w, nw.h, this._x, this._y, nw.w, nw.h);
         for (x = this._x + nw.w; x < mx; x += nc.w) {
-            cx.drawImage(ff.img, nc.x, nc.y, nc.w, nc.h, x, this._y, nc.w, nc.h);
+            cx.drawImage(hud.img, nc.x, nc.y, nc.w, nc.h, x, this._y, nc.w, nc.h);
         }
-        cx.drawImage(ff.img, ne.x, ne.y, ne.w, ne.h, x, this._y, ne.w, ne.h);
+        cx.drawImage(hud.img, ne.x, ne.y, ne.w, ne.h, x, this._y, ne.w, ne.h);
 
         for (y = this._y + nw.h; y < my; y += cw.h) {
-            cx.drawImage(ff.img, cw.x, cw.y, cw.w, cw.h, this._x, y, cw.w, cw.h);
+            cx.drawImage(hud.img, cw.x, cw.y, cw.w, cw.h, this._x, y, cw.w, cw.h);
             for (x = this._x + nw.w; x < mx; x += nc.w) {
-                cx.drawImage(ff.img, cc.x, cc.y, cc.w, cc.h, x, y, cc.w, cc.h);
+                cx.drawImage(hud.img, cc.x, cc.y, cc.w, cc.h, x, y, cc.w, cc.h);
             }
-            cx.drawImage(ff.img, ce.x, ce.y, ce.w, ce.h, x, y, ce.w, ce.h);
+            cx.drawImage(hud.img, ce.x, ce.y, ce.w, ce.h, x, y, ce.w, ce.h);
         }
 
-        cx.drawImage(ff.img, sw.x, sw.y, sw.w, sw.h, this._x, y, sw.w, sw.h);
+        cx.drawImage(hud.img, sw.x, sw.y, sw.w, sw.h, this._x, y, sw.w, sw.h);
         for (x = this._x + nw.w; x < mx; x += nc.w) {
-            cx.drawImage(ff.img, sc.x, sc.y, sc.w, sc.h, x, y, sc.w, sc.h);
+            cx.drawImage(hud.img, sc.x, sc.y, sc.w, sc.h, x, y, sc.w, sc.h);
         }
-        cx.drawImage(ff.img, se.x, se.y, se.w, se.h, x, y, se.w, se.h);
+        cx.drawImage(hud.img, se.x, se.y, se.w, se.h, x, y, se.w, se.h);
 
         if (this.msgL && 0 < this.msgL.length) {
-            sprite.drawText(cx, this._x + 8, this._y + 8, ff, this.msgL);
+            sprite.drawText(cx, this._x + 8, this._y + 8, hud, this.msgL);
         }
         if (this.msgR && 0 < this.msgR.length) {
-            sprite.drawTextR(cx, this._x + this._w - 8, this._y + 8, ff, this.msgR);
+            sprite.drawTextR(cx, this._x + this._w - 8, this._y + 8, hud, this.msgR);
         }
     };
     Menu.get = function(fb, x, y, w, h, msgL, msgR) {
@@ -508,7 +509,7 @@
     };
 
     function init(cv) {
-        if (scene.run) {
+        if (0 < pending || scene.run) {
             return;
         }
         tick.reset();
