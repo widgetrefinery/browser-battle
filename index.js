@@ -80,7 +80,10 @@
                 y += 8;
             }
         },
-        drawDialog: function(cx, x, y, w, h, sheet, nw, nc, ne, cw, cc, ce, sw, sc, se) {
+        drawDialog: function(cx, x, y, w, h, sheet) {
+            var nw = sheet.tile.box_nw, nc = sheet.tile.box_nc, ne = sheet.tile.box_ne;
+            var cw = sheet.tile.box_cw, cc = sheet.tile.box_cc, ce = sheet.tile.box_ce;
+            var sw = sheet.tile.box_sw, sc = sheet.tile.box_sc, se = sheet.tile.box_se;
             var y0 = y, w0 = w, h0 = h;
             w -= nw.w + ne.w;
             h -= nw.h + sw.h;
@@ -358,12 +361,7 @@
             cx.fillText(fps, 10, 10);
         } else {
             var sheet = sprite.sheet.hud;
-            sprite.drawDialog(
-                cx, 0, 0, 32, 24, sheet,
-                sheet.tile.box_nw, sheet.tile.box_nc, sheet.tile.box_ne,
-                sheet.tile.box_cw, sheet.tile.box_cc, sheet.tile.box_ce,
-                sheet.tile.box_sw, sheet.tile.box_sc, sheet.tile.box_se
-            );
+            sprite.drawDialog(cx, 0, 0, 32, 24, sheet);
             sprite.drawText(cx, 8, 8, sprite.sheet.hud, '' + fps);
         }
     }
@@ -447,15 +445,7 @@
     };
     Menu.prototype.draw = function(dt) {
         var sheet = sprite.sheet.hud;
-        sprite.drawDialog(
-            this._fb.cx,
-            this._x, this._y,
-            this._w, this._h,
-            sheet,
-            sheet.tile.box_nw, sheet.tile.box_nc, sheet.tile.box_ne,
-            sheet.tile.box_cw, sheet.tile.box_cc, sheet.tile.box_ce,
-            sheet.tile.box_sw, sheet.tile.box_sc, sheet.tile.box_se
-        );
+        sprite.drawDialog(this._fb.cx, this._x, this._y, this._w, this._h, sheet);
         if (this.msgL && 0 < this.msgL.length) {
             sprite.drawText(this._fb.cx, this._x + 8, this._y + 8, sheet, this.msgL);
         }
