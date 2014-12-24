@@ -180,7 +180,6 @@
                     box_sw:     {x:   0, y:  24, w:  8, h:  8},
                     box_sc:     {x:   8, y:  24, w: 16, h:  8},
                     box_se:     {x:  24, y:  24, w:  8, h:  8},
-                    bar_y_8:    {x: 120, y:  16, w:  8, h:  8},
                     dmg_Miss:   {x: 112, y:  24, w: 16, h:  8},
                     dmg_g_Miss: {x:  80, y: 112, w: 16, h:  8},
                     dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8}
@@ -225,7 +224,7 @@
                         id = 'icon_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 32 + 16 * i, y: 0, w: 16, h: 16};
                     }
-                    tiles = '012345678LR';
+                    tiles = '012345678LRF';
                     for (i = 0; i < tiles.length; i++) {
                         id = 'bar_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 16, w: 8, h: 8};
@@ -280,9 +279,6 @@
             var dt = tick.ts - queue._lst[i].ts;
             queue._lst[i](dt);
             if (0 < queue._lst[i].dt && dt >= queue._lst[i].dt) {
-                if (queue._lst[i].end) {
-                    queue._lst[i].end();
-                }
                 delete queue._lst[i];
                 queue.size--;
             }
@@ -444,14 +440,16 @@
         } else {
             battleScene.reset();
             scene.run = battleScene;
+            battleScene();
         }
     }
     enterScene.reset = function(cv) {
+        queue.reset();
+        scene.fb2.clear();
         pixelateAnim.reset(scene.fb1, cv);
         queue.add(pixelateAnim, 0, 2000);
         fadeAnim.reset(scene.fb3, false);
         queue.add(fadeAnim, 0, 2000);
-        scene.fb2.clear();
     };
 
     function battleBgAnim(dt) {
@@ -470,57 +468,93 @@
         battleBgAnim._fb = fb;
     };
 
-    function Menu() {
+    function enemyDialog() {
+        sprite.drawDialog(enemyDialog._fb.cx, enemyDialog._x, enemyDialog._y, enemyDialog._w, enemyDialog._h, sprite.sheet.hud);
+        sprite.drawText(enemyDialog._fb.cx, enemyDialog._x + 8, enemyDialog._y + 8, sprite.sheet.hud, enemyDialog.txt);
     }
-    Menu.prototype.reset = function(fb, x, y, w, h, msgL, msgR) {
-        this._fb = fb;
-        this._x = x;
-        this._y = y;
-        this._w = w;
-        this._h = h;
-        this.msgL = msgL;
-        this.msgR = msgR;
+    enemyDialog.reset = function(fb, x, y, w, h, txt) {
+        enemyDialog._fb = fb;
+        enemyDialog._x = x;
+        enemyDialog._y = y;
+        enemyDialog._w = w;
+        enemyDialog._h = h;
+        enemyDialog.txt = txt;
     };
-    Menu.prototype.draw = function(dt) {
+
+    function heroDialog() {
         var sheet = sprite.sheet.hud;
-        sprite.drawDialog(this._fb.cx, this._x, this._y, this._w, this._h, sheet);
-        if (this.msgL && 0 < this.msgL.length) {
-            sprite.drawTextC(this._fb.cx, (this._x + this._w / 2) | 0, this._y + 8, sheet, this.msgL);
+        sprite.drawDialog(heroDialog._fb.cx, heroDialog._x, heroDialog._y, heroDialog._w, heroDialog._h, sheet);
+        sprite.drawText(heroDialog._fb.cx, heroDialog._x + 8, heroDialog._y + 8, sheet, heroDialog._txt0);
+        sprite.drawTextR(heroDialog._fb.cx, heroDialog._x + heroDialog._w - 8, heroDialog._y + 8, sheet, heroDialog._txt1);
+    }
+    heroDialog.refresh = function(ndx) {
+        var txt0 = [], txt1 = [];
+        for (var i = 0; i < heroDialog._lst.length; i++) {
+            var n = heroDialog._lst[i].name.split('');
+            if (i === ndx) {
+                for (var j = 0; j < n.length; j++) {
+                    n[j] = 'y_' + n[j];
+                }
+            }
+            txt0 = txt0.concat(n);
+            txt0.push('\n');
+            txt0.push('\n');
+            var h = heroDialog._lst[i].hp;
+            h = ('' + h).split('');
+            txt1 = txt1.concat(h);
+            txt1.push('bar_L');
+            var b = (heroDialog._lst[i].qte * 24) | 0;
+            if (24 <= b) {
+                txt1.push('bar_F');
+                txt1.push('bar_F');
+                txt1.push('bar_F');
+            } else if (16 <= b) {
+                txt1.push('bar_8');
+                txt1.push('bar_8');
+                txt1.push('bar_' + (b - 16));
+            } else if (8 <= b) {
+                txt1.push('bar_8');
+                txt1.push('bar_' + (b - 8));
+                txt1.push('bar_0');
+            } else {
+                txt1.push('bar_8');
+                txt1.push('bar_' + b);
+                txt1.push('bar_0');
+            }
+            txt1.push('bar_R');
+            txt1.push('\n');
+            txt1.push('\n');
         }
-        if (this.msgR && 0 < this.msgR.length) {
-            sprite.drawTextR(this._fb.cx, this._x + this._w - 8, this._y + 8, sheet, this.msgR);
-        }
+        heroDialog._txt0 = txt0;
+        heroDialog._txt1 = txt1;
     };
-    Menu.get = function(fb, x, y, w, h, msgL, msgR) {
-        var menu;
-        if (0 < Menu._lst.length) {
-            menu = Menu._lst.pop();
-        } else {
-            menu = new Menu();
-        }
-        menu.reset(fb, x, y, w, h, msgL, msgR);
-        var fn = function(dt) {
-            menu.draw(dt);
-        };
-        fn.end = function() {
-            Menu._lst.push(menu);
-        };
-        fn.obj = menu;
-        return fn;
+    heroDialog.reset = function(fb, x, y, w, h, lst) {
+        heroDialog._fb = fb;
+        heroDialog._x = x;
+        heroDialog._y = y;
+        heroDialog._w = w;
+        heroDialog._h = h;
+        heroDialog._lst = lst;
+        heroDialog.refresh(-1);
     };
-    Menu._lst = [];
 
     function battleScene() {
-        scene.fb2.clear();
         scene.fb3.clear();
     }
     battleScene.reset = function() {
+        queue.reset();
+        scene.fb2.clear();
         battleBgAnim.reset(scene.fb1);
         queue.add(battleBgAnim, 0, 2000);
-        var msgL = 'h,e,l,l,o, ,w,o,r,l,d,\n,\n,y_f,y_o,y_o, ,y_b,y_a,y_r'.split(',');
-        var msgR = '7,7,bar_L,bar_8,bar_8,bar_3,bar_R,\n,\n,8,0,bar_L,bar_y_8,bar_y_8,bar_y_8,bar_R'.split(',');
-        var menu = Menu.get(scene.fb3, 0, scene.fb3.cv.height - 48, scene.fb3.cv.width, 48, msgL, msgR);
-        queue.add(menu, 0, -1);
+        enemyDialog.reset(scene.fb2, 0, scene.fb2.cv.height - 56, 96, 56, 'Blackbird');
+        enemyDialog();
+        var heroes = [
+            {name: 'Artist',   hp: (Math.random() * 400 + 800) | 0, qte: 0.2},
+            {name: 'Engineer', hp: (Math.random() * 400 + 800) | 0, qte: 0.9},
+            {name: 'Product',  hp: (Math.random() * 400 + 800) | 0, qte: 1},
+        ];
+        heroDialog.reset(scene.fb3, 96, scene.fb3.cv.height - 56, scene.fb3.cv.width - 96, 56, heroes);
+        queue.add(heroDialog, 0, 0);
         fadeAnim.reset(scene.fb3, true);
         queue.add(fadeAnim, 0, 1000);
     };
@@ -533,10 +567,11 @@
         }
     }
     leaveScene.reset = function() {
-        fadeAnim.reset(scene.fb3, true);
-        queue.add(fadeAnim, 0, 1000);
+        queue.reset();
         scene.fb1.clear();
         scene.fb2.clear();
+        fadeAnim.reset(scene.fb3, true);
+        queue.add(fadeAnim, 0, 1000);
     };
 
     function init(cv) {
