@@ -44,6 +44,10 @@
                     y += 8;
                     continue;
                 }
+                if (' ' === id) {
+                    x += 8;
+                    continue;
+                }
                 var tile = sheet.tile[id];
                 if (!tile) {
                     var err = 'invalid id:' + id + ' txt:' + txt;
@@ -68,6 +72,10 @@
                 x = x0;
                 for (i = end - 1; i >= start; i--) {
                     var id = txt[i];
+                    if (' ' === id) {
+                        x -= 8;
+                        continue;
+                    }
                     var tile = sheet.tile[id];
                     if (!tile) {
                         var err = 'invalid id:' + id + ' txt:' + txt;
@@ -197,7 +205,7 @@
                         id = 'dmg_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
                     }
-                    tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()=~ '];
+                    tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()=~'];
                     for (i = 0; i < tiles.length; i++) {
                         for (j = 0; j < tiles[i].length; j++) {
                             id = tiles[i][j];
@@ -479,7 +487,7 @@
     battleScene.reset = function() {
         battleBgAnim.reset(scene.fb1);
         queue.add(battleBgAnim, 0, 2000);
-        var msgL = 'h,e,l,l,o, ,w,o,r,l,d,\n,\n,y_f,y_o,y_o,y_ ,y_b,y_a,y_r'.split(',');
+        var msgL = 'h,e,l,l,o, ,w,o,r,l,d,\n,\n,y_f,y_o,y_o, ,y_b,y_a,y_r'.split(',');
         var msgR = '7,7,bar_L,bar_8,bar_8,bar_3,bar_R,\n,\n,8,0,bar_L,bar_y_8,bar_y_8,bar_y_8,bar_R'.split(',');
         var menu = Menu.get(scene.fb3, 0, scene.fb3.cv.height - 48, scene.fb3.cv.width, 48, msgL, msgR);
         queue.add(menu, 0, -1);
