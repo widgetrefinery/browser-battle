@@ -33,10 +33,6 @@
     };
 
     var sprite = {
-        draw: function(cx, x, y, sheet, id) {
-            var tile = sheet.tile[id];
-            cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, x, y, tile.w, tile.h);
-        },
         drawText: function(cx, x, y, sheet, txt) {
             var x0 = x;
             for (var i = 0; i < txt.length; i++) {
@@ -46,7 +42,7 @@
                     y += 8;
                     continue;
                 }
-                if (' ' === id) {
+                if (' ' === id[id.length - 1]) {
                     x += 8;
                     continue;
                 }
@@ -61,6 +57,7 @@
             }
         },
         drawTextC: function(cx, x, y, sheet, txt) {
+            // assumes all characters are 8px wide
             var i, start, end = -1, x0 = x;
             while (end < txt.length) {
                 start = end + 1;
@@ -74,7 +71,7 @@
                 x = x0 - (end - start) * 4;
                 for (i = start; i < end; i++) {
                     var id = txt[i];
-                    if (' ' === id) {
+                    if (' ' === id[id.length - 1]) {
                         x += 8;
                         continue;
                     }
@@ -104,7 +101,7 @@
                 x = x0;
                 for (i = end - 1; i >= start; i--) {
                     var id = txt[i];
-                    if (' ' === id) {
+                    if (' ' === id[id.length - 1]) {
                         x -= 8;
                         continue;
                     }
@@ -162,10 +159,10 @@
             },
             mul: function(buf, r, g, b, a) {
                 for (var i = 0; i < buf.data.length; i += 4) {
-                    buf.data[i] = (buf.data[i] * r) | 0;
-                    buf.data[i + 1] = (buf.data[i + 1] * g) | 0;
-                    buf.data[i + 2] = (buf.data[i + 2] * b) | 0;
-                    buf.data[i + 3] = (buf.data[i + 3] * a) | 0;
+                    buf.data[i] = (buf.data[i] * r) & 0xff;
+                    buf.data[i + 1] = (buf.data[i + 1] * g) & 0xff;
+                    buf.data[i + 2] = (buf.data[i + 2] * b) & 0xff;
+                    buf.data[i + 3] = (buf.data[i + 3] * a) & 0xff;
                 }
             }
         },
