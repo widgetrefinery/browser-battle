@@ -1,33 +1,35 @@
 (function() {
-    var debug = true;
     var pending = 0;
 
-    var dw = function() {
-        if (!debug) {
-            return undefined;
+    var db = {
+        val: true,
+        cv: function(w, h) {
+            var wn = db.wn();
+            if (!wn) {
+                return undefined;
+            }
+            var cv = wn.document.createElement('canvas');
+            cv.style.border = '1px solid black';
+            cv.style.display = 'block';
+            cv.width = w;
+            cv.height = h;
+            wn.document.body.appendChild(cv);
+            return cv;
+        },
+        wn: function() {
+            if (!db.val) {
+                return undefined;
+            }
+            if (db._wn) {
+                return db._wn;
+            }
+            db._wn = window.open('', 'debug');
+            if (db._wn) {
+                db._wn.document.write('<html><head><title>Debug</title></head><body></body></html>');
+                db._wn.document.close();
+            }
+            return db._wn;
         }
-        if (dw._obj) {
-            return dw._obj;
-        }
-        dw._obj = window.open('', 'fb');
-        if (dw._obj) {
-            dw._obj.document.write('<html><head><title>Debug</title></head><body></body></html>');
-            dw._obj.document.close();
-        }
-        return dw._obj;
-    }
-    dw.cv = function(w, h) {
-        var win = dw();
-        if (!win) {
-            return;
-        }
-        var cv = win.document.createElement('canvas');
-        cv.style.display = 'block';
-        cv.style.border = '1px solid black';
-        cv.width = w;
-        cv.height = h;
-        win.document.body.appendChild(cv);
-        return cv;
     };
 
     var sprite = {
@@ -212,8 +214,8 @@
                     cx.putImageData(buf, 96, 112);
                     // install new canvas
                     sprite.sheet.hud.img = cv;
-                    if (debug) {
-                        var dcv = dw.cv(cv.width, cv.height);
+                    if (db.val) {
+                        var dcv = db.cv(cv.width, cv.height);
                         if (dcv) {
                             dcv.getContext('2d').drawImage(cv, 0, 0);
                         }
@@ -312,12 +314,11 @@
         this.cx.webkitImageSmoothingEnabled = false;
         this.cx.imageSmoothingEnabled = false;
         FB._lst.push(this);
-        if (debug) {
-            this._dcv = dw.cv(320, 240);
-            if (!this._dcv) {
-                return;
+        if (db.val) {
+            this._dcv = db.cv(320, 240);
+            if (this._dcv) {
+                this._dcx = this._dcv.getContext('2d');
             }
-            this._dcx = this._dcv.getContext('2d');
         }
     }
     FB.prototype.clear = function() {
@@ -326,7 +327,7 @@
     FB.prototype.flush = function() {
         this._cx.clearRect(0, 0, this._cv.width, this._cv.height);
         this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
-        if (debug && this._dcv) {
+        if (db.val && this._dcv) {
             this._dcx.clearRect(0, 0, this._dcv.width, this._dcv.height);
             this._dcx.drawImage(this.cv, 0, 0, this._dcv.width, this._dcv.height);
         }
@@ -371,7 +372,7 @@
         tick();
         scene.run();
         queue();
-        if (debug) {
+        if (db.val) {
             dc();
         }
         FB.flush();
