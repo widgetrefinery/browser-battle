@@ -186,29 +186,33 @@
                 init: function() {
                     var cv = document.createElement('canvas');
                     cv.width = 128;
-                    cv.height = 72 + 56;
+                    cv.height = 72 + 40 * 3 + 8 * 2;
                     var cx = cv.getContext('2d');
                     cx.drawImage(sprite.sheet.hud.img, 0, 0, 128, 72, 0, 0, 128, 72);
                     // flipped cursor
                     var buf = cx.getImageData(32, 0, 16, 16);
                     sprite._util.flipH(buf);
                     cx.putImageData(buf, 96, 0);
+                    // text with green tint
+                    buf = cx.getImageData(0, 32, 128, 40);
+                    sprite._util.mul(buf, 0, 1, 0, 1);
+                    cx.putImageData(buf, 0, 80);
+                    // text with red tint
+                    buf = cx.getImageData(0, 32, 128, 40);
+                    sprite._util.mul(buf, 1, 0, 0, 1);
+                    cx.putImageData(buf, 0, 128);
                     // text with yellow tint
-                    var buf = cx.getImageData(0, 32, 128, 40);
+                    buf = cx.getImageData(0, 32, 128, 40);
                     sprite._util.mul(buf, 1, 1, 0, 1);
-                    cx.putImageData(buf, 0, 72);
+                    cx.putImageData(buf, 0, 168);
                     // status text with green tint
                     buf = cx.getImageData(32, 24, 96, 8);
                     sprite._util.mul(buf, 0, 1, 0, 1);
-                    cx.putImageData(buf, 0, 112);
+                    cx.putImageData(buf, 32, 72);
                     // status text with red tint
                     buf = cx.getImageData(32, 24, 96, 8);
                     sprite._util.mul(buf, 1, 0, 0, 1);
-                    cx.putImageData(buf, 0, 120);
-                    // bar with green tint
-                    buf = cx.getImageData(96, 16, 24, 8);
-                    sprite._util.mul(buf, 0, 1, 0, 1);
-                    cx.putImageData(buf, 96, 112);
+                    cx.putImageData(buf, 32, 120);
                     // install new canvas
                     sprite.sheet.hud.img = cv;
                     if (db.val) {
@@ -230,22 +234,20 @@
                     }
                     tiles = '0123456789';
                     for (i = 0; i < tiles.length; i++) {
-                        id = 'dmg_' + tiles[i];
-                        sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
+                        id = tiles[i];
+                        sprite.sheet.hud.tile['dmg_' + id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 32 + 8 * i, y: 72, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 32 + 8 * i, y: 120, w: 8, h: 8};
                     }
                     tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()=~'];
                     for (i = 0; i < tiles.length; i++) {
                         for (j = 0; j < tiles[i].length; j++) {
                             id = tiles[i][j];
                             sprite.sheet.hud.tile[id] = {x: 8 * j, y: 32 + 8 * i, w: 8, h: 8};
-                            sprite.sheet.hud.tile['y_' + id] = {x: 8 * j, y: 72 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['g_' + id] = {x: 8 * j, y: 80 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['r_' + id] = {x: 8 * j, y: 128 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['y_' + id] = {x: 8 * j, y: 168 + 8 * i, w: 8, h: 8};
                         }
-                    }
-                    tiles = '0123456789';
-                    for (i = 0; i < tiles.length; i++) {
-                        id = tiles[i];
-                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 8 * i, y: 112, w: 8, h: 8};
-                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
                     }
                     pending--;
                 }
@@ -514,6 +516,15 @@
             txt0.push('\n');
             t = heroDialog._lst[i].chp;
             t = ('' + t).split('');
+            if (heroDialog._lst[i].chp === heroDialog._lst[i].mhp) {
+                for (j = 0; j < t.length; j++) {
+                    t[j] = 'g_' + t[j];
+                }
+            } else if (heroDialog._lst[i].chp <= heroDialog._lst[i].mhp * 0.25) {
+                for (j = 0; j < t.length; j++) {
+                    t[j] = 'r_' + t[j];
+                }
+            }
             txt1 = txt1.concat(t);
             txt1.push('/');
             t = heroDialog._lst[i].mhp;
