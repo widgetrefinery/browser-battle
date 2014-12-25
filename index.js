@@ -392,8 +392,7 @@
             cx.textBaseline = 'top';
             cx.fillText(fps, 10, 10);
         } else {
-            var sheet = sprite.sheet.hud;
-            sprite.drawDialog(cx, 0, 0, 32, 24, sheet);
+            sprite.drawDialog(cx, 0, 0, 32, 24, sprite.sheet.hud);
             sprite.drawText(cx, 8, 8, sprite.sheet.hud, '' + fps);
         }
     }
@@ -409,17 +408,25 @@
         var fb = fadeAnim._fb;
         fb.cx.fillStyle = 'rgba(0,0,0,' + a + ')';
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
+        var g = fb.cx.createRadialGradient(fadeAnim._x, fadeAnim._y, 0, fadeAnim._x, fadeAnim._y, fadeAnim._r);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.8, 'rgba(0,0,0,' + a + ')');
+        fb.cx.fillStyle = g;
+        fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
     }
     fadeAnim.reset = function(fb, fade_in) {
         fadeAnim._fb = fb;
         fadeAnim._in = fade_in;
+        fadeAnim._x = fb.cv.width >> 1;
+        fadeAnim._y = fb.cv.height >> 1;
+        fadeAnim._r = Math.sqrt(fadeAnim._x * fadeAnim._x + fadeAnim._y * fadeAnim._y);
     };
 
     function pixelateAnim(dt) {
         var scale = Math.pow(2, -2 - 4 * dt / pixelateAnim.dt);
         var fb = pixelateAnim._fb;
-        var w = Math.floor(fb.cv.width * scale);
-        var h = Math.floor(fb.cv.height * scale);
+        var w = (fb.cv.width * scale) | 0;
+        var h = (fb.cv.height * scale) | 0;
         fb.cx.drawImage(pixelateAnim._cv, 0, 0, w, h);
         fb.cx.drawImage(
             fb.cv,
