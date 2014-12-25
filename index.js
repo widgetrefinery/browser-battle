@@ -180,8 +180,8 @@
                     box_sc:     {x:   8, y:  24, w: 16, h:  8},
                     box_se:     {x:  24, y:  24, w:  8, h:  8},
                     dmg_Miss:   {x: 112, y:  24, w: 16, h:  8},
-                    dmg_g_Miss: {x:  80, y: 112, w: 16, h:  8},
-                    dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8}
+                    dmg_g_Miss: {x: 112, y:  72, w: 16, h:  8},
+                    dmg_r_Miss: {x: 112, y: 120, w: 16, h:  8}
                 },
                 init: function() {
                     var cv = document.createElement('canvas');
