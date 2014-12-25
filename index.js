@@ -301,6 +301,12 @@
         q.size++;
         return id;
     };
+    q.del = function(id) {
+        if (undefined !== q._lst[id]) {
+            delete q._lst[id];
+            q.size--;
+        }
+    };
     q.rst = function() {
         q._id = 0;
         q._lst = [];
@@ -371,6 +377,54 @@
     FB._lst = [];
     window.addEventListener('resize', FB.resize);
 
+    function io(e) {
+        switch (e.which) {
+            case io.kb.Up:
+                io.up = true;
+                break;
+            case io.kb.Down:
+                io.down = true;
+                break;
+            case io.kb.Left:
+                io.left = true;
+                break;
+            case io.kb.Right:
+                io.right = true;
+                break;
+            case io.kb.Enter:
+            case io.kb.Space:
+            case io.kb.A:
+                io.ok = true;
+                break;
+            case io.kb.Back:
+            case io.kb.Esc:
+            case io.kb.B:
+                io.back = true;
+                break;
+        }
+    }
+    io.rst = function() {
+        io.up = false;
+        io.down = false;
+        io.left = false;
+        io.right = false;
+        io.ok = false;
+        io.back = false;
+    };
+    io.kb = {
+        Back: 8,
+        Enter: 13,
+        Esc: 27,
+        Space: 32,
+        Left: 37,
+        Up: 38,
+        Right: 39,
+        Down: 40,
+        A: 65,
+        B: 66
+    };
+    document.addEventListener('keydown', io);
+
     function scn() {
         if (!scn.run) {
             FB.hide();
@@ -383,6 +437,7 @@
             dc();
         }
         FB.flush();
+        io.rst();
         requestAnimationFrame(scn);
     }
     scn.fb1 = new FB(320, 240);
@@ -496,17 +551,19 @@
         enemyDlg.txt = txt;
     };
 
+    var actLst = [];
+
     function heroDlg() {
         var sheet = sprite.sheet.hud;
         sprite.drawDialog(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
         sprite.drawText(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, heroDlg._txt0);
         sprite.drawTextR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, heroDlg._txt1);
     }
-    heroDlg.upd = function(ndx) {
+    heroDlg.upd = function() {
         var txt0 = [], txt1 = [];
         for (var i = 0; i < heroDlg._lst.length; i++) {
             var t = heroDlg._lst[i].nam.split('');
-            if (i === ndx) {
+            if (0 < actLst.length && heroDlg._lst[i] === actLst[0]) {
                 for (var j = 0; j < t.length; j++) {
                     t[j] = 'y_' + t[j];
                 }
@@ -571,27 +628,46 @@
         var cur = sheet.tile.icon_cur;
         sprite.drawDialog(cx, heroOpt1Dlg._x, heroOpt1Dlg._y, heroOpt1Dlg._w, heroOpt1Dlg._h, sheet);
         sprite.drawText(cx, heroOpt1Dlg._x + 16, heroOpt1Dlg._y + 8, sheet, heroOpt1Dlg._txt);
-        cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOpt1Dlg._x, heroOpt1Dlg._y + 4 + 16 * heroOpt1Dlg.cur, cur.w, cur.h);
+        cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOpt1Dlg._x, heroOpt1Dlg._y + 4 + 16 * heroOpt1Dlg._cur, cur.w, cur.h);
     }
-    heroOpt1Dlg.rst = function(fb, x, y, w, h, txt) {
+    heroOpt1Dlg.upd = function() {
+        if (io.back) {
+            return -1;
+        }
+        if (io.ok) {
+            return heroOpt1Dlg._cur;
+        }
+        if (io.up) {
+            if (0 < heroOpt1Dlg._cur) {
+                heroOpt1Dlg._cur--;
+            }
+        } else if (io.down) {
+            if (heroOpt1Dlg._len > heroOpt1Dlg._cur) {
+                heroOpt1Dlg._cur++;
+            }
+        }
+        return undefined;
+    };
+    heroOpt1Dlg.rst = function(fb, x, y, w, h, lst) {
         heroOpt1Dlg._fb = fb;
         heroOpt1Dlg._x = x;
         heroOpt1Dlg._y = y;
         heroOpt1Dlg._w = w;
         heroOpt1Dlg._h = h;
-        heroOpt1Dlg._txt = txt;
-        heroOpt1Dlg.cur = 0;
+        heroOpt1Dlg._txt = lst.join('\n\n');
+        heroOpt1Dlg._len = lst.length;
+        heroOpt1Dlg._cur = 0;
     }
 
     var heroes = {
-        cur: -1,
         upd: function(hero, dt) {
             if (100 === hero.chg) {
                 return;
             }
             hero.chg = (hero.spd * dt / 200) | 0;
-            if (100 < hero.chg) {
+            if (100 <= hero.chg) {
                 hero.chg = 100;
+                actLst.push(hero);
             }
         },
         rst: function(hero, name) {
@@ -617,22 +693,30 @@
 
     function btlScn() {
         scn.fb3.clr();
-        if (-1 === heroes.cur) {
-            for (var i = 0; i < heroDlg._lst.length; i++) {
-                if (100 <= heroDlg._lst[i].chg) {
-                    heroes.cur = i;
-                    break;
+        heroDlg.upd();
+        switch (btlScn._st) {
+            case 1:
+                var x = heroOpt1Dlg.upd();
+                if (-1 === x) {
+                    q.del(heroOpt1Dlg.qid);
+                    btlScn._st = 0;
+                    var hero = actLst.shift();
+                    actLst.push(hero);
                 }
-            }
-            if (-1 !== heroes.cur) {
-                heroOpt1Dlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56, 'Attack\n\nSpecial\n\nHeal');
-                var id = q.add(heroOpt1Dlg);
-                heroOpt1Dlg.qid = id;
-            }
+                break;
+            case 0:
+            default:
+                if (0 < actLst.length) {
+                    heroOpt1Dlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56, ['Attack', 'Special', 'Heal']);
+                    var id = q.add(heroOpt1Dlg, 0, 0);
+                    heroOpt1Dlg.qid = id;
+                    btlScn._st = 1;
+                }
+                break;
         }
-        heroDlg.upd(heroes.cur);
     }
     btlScn.rst = function() {
+        btlScn._st = 0;
         q.rst();
         scn.fb2.clr();
         btlBgAnim.rst(scn.fb1);
@@ -673,6 +757,7 @@
         tick.rst();
         q.rst();
         FB.show();
+        io.rst();
         loadScn.rst(cv);
         scn.run = loadScn;
         btlScn.rst();
