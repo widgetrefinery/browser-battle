@@ -141,7 +141,7 @@
             cx.fillStyle = g;
             cx.fillRect(x, y0, w0, h0);
         },
-        _util: {
+        _utl: {
             flipH: function(buf) {
                 for (var y = 0; y < buf.data.length; y += buf.width * 4) {
                     for (var x = 0; x < buf.width * 2; x += 4) {
@@ -191,27 +191,27 @@
                     cx.drawImage(sprite.sheet.hud.img, 0, 0, 128, 72, 0, 0, 128, 72);
                     // flipped cursor
                     var buf = cx.getImageData(32, 0, 16, 16);
-                    sprite._util.flipH(buf);
+                    sprite._utl.flipH(buf);
                     cx.putImageData(buf, 96, 0);
                     // text with green tint
                     buf = cx.getImageData(0, 32, 128, 40);
-                    sprite._util.mul(buf, 0, 1, 0, 1);
+                    sprite._utl.mul(buf, 0, 1, 0, 1);
                     cx.putImageData(buf, 0, 80);
                     // text with red tint
                     buf = cx.getImageData(0, 32, 128, 40);
-                    sprite._util.mul(buf, 1, 0, 0, 1);
+                    sprite._utl.mul(buf, 1, 0, 0, 1);
                     cx.putImageData(buf, 0, 128);
                     // text with yellow tint
                     buf = cx.getImageData(0, 32, 128, 40);
-                    sprite._util.mul(buf, 1, 1, 0, 1);
+                    sprite._utl.mul(buf, 1, 1, 0, 1);
                     cx.putImageData(buf, 0, 168);
                     // status text with green tint
                     buf = cx.getImageData(32, 24, 96, 8);
-                    sprite._util.mul(buf, 0, 1, 0, 1);
+                    sprite._utl.mul(buf, 0, 1, 0, 1);
                     cx.putImageData(buf, 32, 72);
                     // status text with red tint
                     buf = cx.getImageData(32, 24, 96, 8);
-                    sprite._util.mul(buf, 1, 0, 0, 1);
+                    sprite._utl.mul(buf, 1, 0, 0, 1);
                     cx.putImageData(buf, 32, 120);
                     // install new canvas
                     sprite.sheet.hud.img = cv;
@@ -275,36 +275,36 @@
         tick.dt = ts - tick.ts;
         tick.ts = ts;
     }
-    tick.reset = function() {
+    tick.rst = function() {
         tick.dt = 1 / 60;
         tick.ts = Date.now();
     };
 
-    function queue() {
-        for (var i in queue._lst) {
-            if (tick.ts < queue._lst[i].ts) {
+    function q() {
+        for (var i in q._lst) {
+            if (tick.ts < q._lst[i].ts) {
                 continue;
             }
-            var dt = tick.ts - queue._lst[i].ts;
-            queue._lst[i](dt);
-            if (0 < queue._lst[i].dt && dt >= queue._lst[i].dt) {
-                delete queue._lst[i];
-                queue.size--;
+            var dt = tick.ts - q._lst[i].ts;
+            q._lst[i](dt);
+            if (0 < q._lst[i].dt && dt >= q._lst[i].dt) {
+                delete q._lst[i];
+                q.size--;
             }
         }
     }
-    queue.add = function(fn, ts, dt) {
+    q.add = function(fn, ts, dt) {
         fn.ts = tick.ts + ts;
         fn.dt = dt;
-        var id = 'f' + queue._id++;
-        queue._lst[id] = fn;
-        queue.size++;
+        var id = 'f' + q._id++;
+        q._lst[id] = fn;
+        q.size++;
         return id;
     };
-    queue.reset = function() {
-        queue._id = 0;
-        queue._lst = [];
-        queue.size = 0;
+    q.rst = function() {
+        q._id = 0;
+        q._lst = [];
+        q.size = 0;
     };
 
     function FB(w, h) {
@@ -328,7 +328,7 @@
             }
         }
     }
-    FB.prototype.clear = function() {
+    FB.prototype.clr = function() {
         this.cx.clearRect(0, 0, this.cv.width, this.cv.height);
     };
     FB.prototype.flush = function() {
@@ -339,9 +339,9 @@
             this._dcx.drawImage(this.cv, 0, 0, this._dcv.width, this._dcv.height);
         }
     };
-    FB.clear = function() {
+    FB.clr = function() {
         for (var i = 0; i < FB._lst.length; i++) {
-            FB._lst[i].clear();
+            FB._lst[i].clr();
         }
     };
     FB.flush = function() {
@@ -351,7 +351,7 @@
     };
     FB.show = function() {
         FB.resize();
-        FB.clear();
+        FB.clr();
         FB.flush();
         for (var i = 0; i < FB._lst.length; i++) {
             document.body.appendChild(FB._lst[i]._cv);
@@ -371,26 +371,26 @@
     FB._lst = [];
     window.addEventListener('resize', FB.resize);
 
-    function scene() {
-        if (!scene.run) {
+    function scn() {
+        if (!scn.run) {
             FB.hide();
             return;
         }
         tick();
-        scene.run();
-        queue();
+        scn.run();
+        q();
         if (db.val) {
             dc();
         }
         FB.flush();
-        requestAnimationFrame(scene);
+        requestAnimationFrame(scn);
     }
-    scene.fb1 = new FB(320, 240);
-    scene.fb2 = new FB(320, 240);
-    scene.fb3 = new FB(320, 240);
+    scn.fb1 = new FB(320, 240);
+    scn.fb2 = new FB(320, 240);
+    scn.fb3 = new FB(320, 240);
 
     function dc() {
-        var cx = scene.fb3.cx;
+        var cx = scn.fb3.cx;
         var fps = (1000 / tick.dt) | 0;
         var native = false;
 
@@ -424,7 +424,7 @@
         fb.cx.fillStyle = g;
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
     }
-    fadeAnim.reset = function(fb, fade_in) {
+    fadeAnim.rst = function(fb, fade_in) {
         fadeAnim._fb = fb;
         fadeAnim._in = fade_in;
         fadeAnim._x = fb.cv.width >> 1;
@@ -432,45 +432,45 @@
         fadeAnim._r = Math.sqrt(fadeAnim._x * fadeAnim._x + fadeAnim._y * fadeAnim._y);
     };
 
-    function pixelateAnim(dt) {
-        var scale = Math.pow(2, -2 - 4 * dt / pixelateAnim.dt);
-        var fb = pixelateAnim._fb;
+    function blurAnim(dt) {
+        var scale = Math.pow(2, -2 - 4 * dt / blurAnim.dt);
+        var fb = blurAnim._fb;
         var w = (fb.cv.width * scale) | 0;
         var h = (fb.cv.height * scale) | 0;
-        fb.cx.drawImage(pixelateAnim._cv, 0, 0, w, h);
+        fb.cx.drawImage(blurAnim._cv, 0, 0, w, h);
         fb.cx.drawImage(
             fb.cv,
             0, 0, w, h,
             0, 0, fb.cv.width, fb.cv.height
         );
     }
-    pixelateAnim.reset = function(fb, cv) {
-        pixelateAnim._fb = fb;
-        pixelateAnim._cv = cv;
+    blurAnim.rst = function(fb, cv) {
+        blurAnim._fb = fb;
+        blurAnim._cv = cv;
     };
 
-    function enterScene() {
-        if (0 < queue.size) {
-            scene.fb3.clear();
+    function loadScn() {
+        if (0 < q.size) {
+            scn.fb3.clr();
         } else {
-            battleScene.reset();
-            scene.run = battleScene;
-            battleScene();
+            btlScn.rst();
+            scn.run = btlScn;
+            btlScn();
         }
     }
-    enterScene.reset = function(cv) {
-        queue.reset();
-        scene.fb2.clear();
-        pixelateAnim.reset(scene.fb1, cv);
-        queue.add(pixelateAnim, 0, 2000);
-        fadeAnim.reset(scene.fb3, false);
-        queue.add(fadeAnim, 0, 2000);
+    loadScn.rst = function(cv) {
+        q.rst();
+        scn.fb2.clr();
+        blurAnim.rst(scn.fb1, cv);
+        q.add(blurAnim, 0, 2000);
+        fadeAnim.rst(scn.fb3, false);
+        q.add(fadeAnim, 0, 2000);
     };
 
-    function battleBgAnim(dt) {
-        var img = pixelateAnim._cv;
-        var fb = battleBgAnim._fb;
-        var pc = dt / battleBgAnim.dt;
+    function btlBgAnim(dt) {
+        var img = blurAnim._cv;
+        var fb = btlBgAnim._fb;
+        var pc = dt / btlBgAnim.dt;
         fb.cx.drawImage(
             img,
             0,
@@ -479,33 +479,33 @@
             (fb.cv.height * 1.5) | 0
         );
     }
-    battleBgAnim.reset = function(fb) {
-        battleBgAnim._fb = fb;
+    btlBgAnim.rst = function(fb) {
+        btlBgAnim._fb = fb;
     };
 
-    function enemyDialog() {
-        sprite.drawDialog(enemyDialog._fb.cx, enemyDialog._x, enemyDialog._y, enemyDialog._w, enemyDialog._h, sprite.sheet.hud);
-        sprite.drawText(enemyDialog._fb.cx, enemyDialog._x + 8, enemyDialog._y + 8, sprite.sheet.hud, enemyDialog.txt);
+    function enemyDlg() {
+        sprite.drawDialog(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
+        sprite.drawText(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg.txt);
     }
-    enemyDialog.reset = function(fb, x, y, w, h, txt) {
-        enemyDialog._fb = fb;
-        enemyDialog._x = x;
-        enemyDialog._y = y;
-        enemyDialog._w = w;
-        enemyDialog._h = h;
-        enemyDialog.txt = txt;
+    enemyDlg.rst = function(fb, x, y, w, h, txt) {
+        enemyDlg._fb = fb;
+        enemyDlg._x = x;
+        enemyDlg._y = y;
+        enemyDlg._w = w;
+        enemyDlg._h = h;
+        enemyDlg.txt = txt;
     };
 
-    function heroDialog() {
+    function heroDlg() {
         var sheet = sprite.sheet.hud;
-        sprite.drawDialog(heroDialog._fb.cx, heroDialog._x, heroDialog._y, heroDialog._w, heroDialog._h, sheet);
-        sprite.drawText(heroDialog._fb.cx, heroDialog._x + 8, heroDialog._y + 8, sheet, heroDialog._txt0);
-        sprite.drawTextR(heroDialog._fb.cx, heroDialog._x + heroDialog._w - 8, heroDialog._y + 8, sheet, heroDialog._txt1);
+        sprite.drawDialog(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
+        sprite.drawText(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, heroDlg._txt0);
+        sprite.drawTextR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, heroDlg._txt1);
     }
-    heroDialog.upd = function(ndx) {
+    heroDlg.upd = function(ndx) {
         var txt0 = [], txt1 = [];
-        for (var i = 0; i < heroDialog._lst.length; i++) {
-            var t = heroDialog._lst[i].nam.split('');
+        for (var i = 0; i < heroDlg._lst.length; i++) {
+            var t = heroDlg._lst[i].nam.split('');
             if (i === ndx) {
                 for (var j = 0; j < t.length; j++) {
                     t[j] = 'y_' + t[j];
@@ -514,24 +514,24 @@
             txt0 = txt0.concat(t);
             txt0.push('\n');
             txt0.push('\n');
-            t = heroDialog._lst[i].chp;
+            t = heroDlg._lst[i].chp;
             t = ('' + t).split('');
-            if (heroDialog._lst[i].chp === heroDialog._lst[i].mhp) {
+            if (heroDlg._lst[i].chp === heroDlg._lst[i].mhp) {
                 for (j = 0; j < t.length; j++) {
                     t[j] = 'g_' + t[j];
                 }
-            } else if (heroDialog._lst[i].chp <= heroDialog._lst[i].mhp * 0.25) {
+            } else if (heroDlg._lst[i].chp <= heroDlg._lst[i].mhp * 0.25) {
                 for (j = 0; j < t.length; j++) {
                     t[j] = 'r_' + t[j];
                 }
             }
             txt1 = txt1.concat(t);
             txt1.push('/');
-            t = heroDialog._lst[i].mhp;
+            t = heroDlg._lst[i].mhp;
             t = ('' + t).split('');
             txt1 = txt1.concat(t);
             txt1.push('bar_L');
-            t = (heroDialog._lst[i].chg * 0.24) | 0;
+            t = (heroDlg._lst[i].chg * 0.24) | 0;
             if (24 <= t) {
                 txt1.push('bar_F');
                 txt1.push('bar_F');
@@ -553,16 +553,16 @@
             txt1.push('\n');
             txt1.push('\n');
         }
-        heroDialog._txt0 = txt0;
-        heroDialog._txt1 = txt1;
+        heroDlg._txt0 = txt0;
+        heroDlg._txt1 = txt1;
     };
-    heroDialog.reset = function(fb, x, y, w, h, lst) {
-        heroDialog._fb = fb;
-        heroDialog._x = x;
-        heroDialog._y = y;
-        heroDialog._w = w;
-        heroDialog._h = h;
-        heroDialog._lst = lst;
+    heroDlg.rst = function(fb, x, y, w, h, lst) {
+        heroDlg._fb = fb;
+        heroDlg._x = x;
+        heroDlg._y = y;
+        heroDlg._w = w;
+        heroDlg._h = h;
+        heroDlg._lst = lst;
     };
 
     var heroes = {
@@ -597,64 +597,64 @@
         heroes.upd(hero3, dt);
     }
 
-    function battleScene() {
-        scene.fb3.clear();
+    function btlScn() {
+        scn.fb3.clr();
         if (-1 === heroes.cur) {
-            for (var i = 0; i < heroDialog._lst.length; i++) {
-                if (100 <= heroDialog._lst[i].chg) {
+            for (var i = 0; i < heroDlg._lst.length; i++) {
+                if (100 <= heroDlg._lst[i].chg) {
                     heroes.cur = i;
                     break;
                 }
             }
         }
-        heroDialog.upd(heroes.cur);
+        heroDlg.upd(heroes.cur);
     }
-    battleScene.reset = function() {
-        queue.reset();
-        scene.fb2.clear();
-        battleBgAnim.reset(scene.fb1);
-        queue.add(battleBgAnim, 0, 2000);
-        enemyDialog.reset(scene.fb2, 0, scene.fb2.cv.height - 56, 96, 56, 'Blackbird');
-        enemyDialog();
+    btlScn.rst = function() {
+        q.rst();
+        scn.fb2.clr();
+        btlBgAnim.rst(scn.fb1);
+        q.add(btlBgAnim, 0, 2000);
+        enemyDlg.rst(scn.fb2, 0, scn.fb2.cv.height - 56, 96, 56, 'Blackbird');
+        enemyDlg();
         heroes.rst(hero1, 'Artist');
-        queue.add(hero1, 2000, 0);
+        q.add(hero1, 2000, 0);
         heroes.rst(hero2, 'Engineer');
-        queue.add(hero2, 2000, 0);
+        q.add(hero2, 2000, 0);
         heroes.rst(hero3, 'Product');
-        queue.add(hero3, 2000, 0);
-        heroDialog.reset(scene.fb3, 96, scene.fb3.cv.height - 56, scene.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
-        queue.add(heroDialog, 0, 0);
-        fadeAnim.reset(scene.fb3, true);
-        queue.add(fadeAnim, 0, 1000);
+        q.add(hero3, 2000, 0);
+        heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
+        q.add(heroDlg, 0, 0);
+        fadeAnim.rst(scn.fb3, true);
+        q.add(fadeAnim, 0, 1000);
     };
 
-    function leaveScene() {
-        if (0 < queue.size) {
-            scene.fb3.clear();
+    function exitScn() {
+        if (0 < q.size) {
+            scn.fb3.clr();
         } else {
-            scene.run = undefined;
+            scn.run = undefined;
         }
     }
-    leaveScene.reset = function() {
-        queue.reset();
-        scene.fb1.clear();
-        scene.fb2.clear();
-        fadeAnim.reset(scene.fb3, true);
-        queue.add(fadeAnim, 0, 1000);
+    exitScn.rst = function() {
+        q.rst();
+        scn.fb1.clr();
+        scn.fb2.clr();
+        fadeAnim.rst(scn.fb3, true);
+        q.add(fadeAnim, 0, 1000);
     };
 
     function init(cv) {
-        if (0 < pending || scene.run) {
+        if (0 < pending || scn.run) {
             return;
         }
-        tick.reset();
-        queue.reset();
+        tick.rst();
+        q.rst();
         FB.show();
-        enterScene.reset(cv);
-        scene.run = enterScene;
-        battleScene.reset();
-        scene.run = battleScene;
-        scene();
+        loadScn.rst(cv);
+        scn.run = loadScn;
+        btlScn.rst();
+        scn.run = btlScn;
+        scn();
     }
     document.addEventListener('click', function() {
         html2canvas(document.body, {onrendered: init});
