@@ -260,6 +260,14 @@
         sprite.sheet.hud.img.addEventListener('load', sprite.sheet.hud.init);
     }
 
+    function prng() {
+        prng._s ^= (prng._s << 21);
+        prng._s ^= (prng._s >>> 35);
+        prng._s ^= (prng._s << 4);
+        return (prng._s & 0xffffffff) / 0x100000000;
+    }
+    prng._s = (Date.now() ^ Math.random()) | 1;
+
     function tick() {
         var ts = Date.now();
         tick.dt = ts - tick.ts;
@@ -492,38 +500,42 @@
         sprite.drawText(heroDialog._fb.cx, heroDialog._x + 8, heroDialog._y + 8, sheet, heroDialog._txt0);
         sprite.drawTextR(heroDialog._fb.cx, heroDialog._x + heroDialog._w - 8, heroDialog._y + 8, sheet, heroDialog._txt1);
     }
-    heroDialog.refresh = function(ndx) {
+    heroDialog.upd = function(ndx) {
         var txt0 = [], txt1 = [];
         for (var i = 0; i < heroDialog._lst.length; i++) {
-            var n = heroDialog._lst[i].name.split('');
+            var t = heroDialog._lst[i].nam.split('');
             if (i === ndx) {
-                for (var j = 0; j < n.length; j++) {
-                    n[j] = 'y_' + n[j];
+                for (var j = 0; j < t.length; j++) {
+                    t[j] = 'y_' + t[j];
                 }
             }
-            txt0 = txt0.concat(n);
+            txt0 = txt0.concat(t);
             txt0.push('\n');
             txt0.push('\n');
-            var h = heroDialog._lst[i].hp;
-            h = ('' + h).split('');
-            txt1 = txt1.concat(h);
+            t = heroDialog._lst[i].chp;
+            t = ('' + t).split('');
+            txt1 = txt1.concat(t);
+            txt1.push('/');
+            t = heroDialog._lst[i].mhp;
+            t = ('' + t).split('');
+            txt1 = txt1.concat(t);
             txt1.push('bar_L');
-            var b = (heroDialog._lst[i].qte * 24) | 0;
-            if (24 <= b) {
+            t = (heroDialog._lst[i].chg * 0.24) | 0;
+            if (24 <= t) {
                 txt1.push('bar_F');
                 txt1.push('bar_F');
                 txt1.push('bar_F');
-            } else if (16 <= b) {
+            } else if (16 <= t) {
                 txt1.push('bar_8');
                 txt1.push('bar_8');
-                txt1.push('bar_' + (b - 16));
-            } else if (8 <= b) {
+                txt1.push('bar_' + (t - 16));
+            } else if (8 <= t) {
                 txt1.push('bar_8');
-                txt1.push('bar_' + (b - 8));
+                txt1.push('bar_' + (t - 8));
                 txt1.push('bar_0');
             } else {
-                txt1.push('bar_8');
-                txt1.push('bar_' + b);
+                txt1.push('bar_' + t);
+                txt1.push('bar_0');
                 txt1.push('bar_0');
             }
             txt1.push('bar_R');
@@ -540,11 +552,51 @@
         heroDialog._w = w;
         heroDialog._h = h;
         heroDialog._lst = lst;
-        heroDialog.refresh(-1);
     };
+
+    var heroes = {
+        cur: -1,
+        upd: function(hero, dt) {
+            if (100 === hero.chg) {
+                return;
+            }
+            hero.chg = (hero.spd * dt / 200) | 0;
+            if (100 < hero.chg) {
+                hero.chg = 100;
+            }
+        },
+        rst: function(hero, name) {
+            hero.nam = name;
+            hero.mhp = (prng() * 400 + 1200) | 0;
+            hero.chp = hero.mhp;
+            hero.spd = (prng() * 4 + 6) | 0;
+            hero.chg = 0;
+        }
+    };
+
+    function hero1(dt) {
+        heroes.upd(hero1, dt);
+    }
+
+    function hero2(dt) {
+        heroes.upd(hero2, dt);
+    }
+
+    function hero3(dt) {
+        heroes.upd(hero3, dt);
+    }
 
     function battleScene() {
         scene.fb3.clear();
+        if (-1 === heroes.cur) {
+            for (var i = 0; i < heroDialog._lst.length; i++) {
+                if (100 <= heroDialog._lst[i].chg) {
+                    heroes.cur = i;
+                    break;
+                }
+            }
+        }
+        heroDialog.upd(heroes.cur);
     }
     battleScene.reset = function() {
         queue.reset();
@@ -553,12 +605,13 @@
         queue.add(battleBgAnim, 0, 2000);
         enemyDialog.reset(scene.fb2, 0, scene.fb2.cv.height - 56, 96, 56, 'Blackbird');
         enemyDialog();
-        var heroes = [
-            {name: 'Artist',   hp: (Math.random() * 400 + 800) | 0, qte: 0.2},
-            {name: 'Engineer', hp: (Math.random() * 400 + 800) | 0, qte: 0.9},
-            {name: 'Product',  hp: (Math.random() * 400 + 800) | 0, qte: 1},
-        ];
-        heroDialog.reset(scene.fb3, 96, scene.fb3.cv.height - 56, scene.fb3.cv.width - 96, 56, heroes);
+        heroes.rst(hero1, 'Artist');
+        queue.add(hero1, 2000, 0);
+        heroes.rst(hero2, 'Engineer');
+        queue.add(hero2, 2000, 0);
+        heroes.rst(hero3, 'Product');
+        queue.add(hero3, 2000, 0);
+        heroDialog.reset(scene.fb3, 96, scene.fb3.cv.height - 56, scene.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         queue.add(heroDialog, 0, 0);
         fadeAnim.reset(scene.fb3, true);
         queue.add(fadeAnim, 0, 1000);
