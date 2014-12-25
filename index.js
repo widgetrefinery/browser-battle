@@ -565,6 +565,24 @@
         heroDlg._lst = lst;
     };
 
+    function heroOpt1Dlg() {
+        var cx = heroOpt1Dlg._fb.cx;
+        var sheet = sprite.sheet.hud;
+        var cur = sheet.tile.icon_cur;
+        sprite.drawDialog(cx, heroOpt1Dlg._x, heroOpt1Dlg._y, heroOpt1Dlg._w, heroOpt1Dlg._h, sheet);
+        sprite.drawText(cx, heroOpt1Dlg._x + 16, heroOpt1Dlg._y + 8, sheet, heroOpt1Dlg._txt);
+        cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOpt1Dlg._x, heroOpt1Dlg._y + 4 + 16 * heroOpt1Dlg.cur, cur.w, cur.h);
+    }
+    heroOpt1Dlg.rst = function(fb, x, y, w, h, txt) {
+        heroOpt1Dlg._fb = fb;
+        heroOpt1Dlg._x = x;
+        heroOpt1Dlg._y = y;
+        heroOpt1Dlg._w = w;
+        heroOpt1Dlg._h = h;
+        heroOpt1Dlg._txt = txt;
+        heroOpt1Dlg.cur = 0;
+    }
+
     var heroes = {
         cur: -1,
         upd: function(hero, dt) {
@@ -605,6 +623,11 @@
                     heroes.cur = i;
                     break;
                 }
+            }
+            if (-1 !== heroes.cur) {
+                heroOpt1Dlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56, 'Attack\n\nSpecial\n\nHeal');
+                var id = q.add(heroOpt1Dlg);
+                heroOpt1Dlg.qid = id;
             }
         }
         heroDlg.upd(heroes.cur);
