@@ -142,15 +142,28 @@
             cx.fillRect(x, y0, w0, h0);
         },
         _utl: {
-            flipH: function(buf) {
+            mirH: function(buf) {
+                for (var y = 0; y < buf.data.length / 2; y += buf.width * 4) {
+                    var i1 = y;
+                    var i2 = buf.data.length - buf.width * 4 - y;
+                    for (var x = 0; x < buf.width * 4; x++) {
+                        var t = buf.data[i1];
+                        buf.data[i1] = buf.data[i2];
+                        buf.data[i2] = t;
+                        i1++;
+                        i2++;
+                    }
+                }
+            },
+            mirV: function(buf) {
                 for (var y = 0; y < buf.data.length; y += buf.width * 4) {
                     for (var x = 0; x < buf.width * 2; x += 4) {
                         var i1 = y + x;
                         var i2 = y + buf.width * 4 - 4 - x;
                         for (var i = 0; i < 4; i++) {
-                            var tmp = buf.data[i1];
+                            var t = buf.data[i1];
                             buf.data[i1] = buf.data[i2];
-                            buf.data[i2] = tmp;
+                            buf.data[i2] = t;
                             i1++;
                             i2++;
                         }
@@ -180,8 +193,20 @@
                     box_sc:     {x:   8, y:   8, w:  1, h:  8},
                     box_se:     {x:   8, y:   8, w:  8, h:  8},
                     dmg_Miss:   {x:  80, y:  24, w: 16, h:  8},
+                    up:         {x:  96, y:  24, w:  8, h:  8},
+                    right:      {x: 104, y:  24, w:  8, h:  8},
+                    down:       {x: 112, y:  24, w:  8, h:  8},
+                    left:       {x: 120, y:  24, w:  8, h:  8},
                     dmg_g_Miss: {x:  80, y:  72, w: 16, h:  8},
-                    dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8}
+                    g_up:       {x:  96, y:  72, w:  8, h:  8},
+                    g_right:    {x: 104, y:  72, w:  8, h:  8},
+                    g_down:     {x: 112, y:  72, w:  8, h:  8},
+                    g_left:     {x: 120, y:  72, w:  8, h:  8},
+                    dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8},
+                    r_up:       {x:  96, y: 120, w:  8, h:  8},
+                    r_right:    {x: 104, y: 120, w:  8, h:  8},
+                    r_down:     {x: 112, y: 120, w:  8, h:  8},
+                    r_left:     {x: 120, y: 120, w:  8, h:  8}
                 },
                 init: function() {
                     var cv = document.createElement('canvas');
@@ -191,8 +216,15 @@
                     cx.drawImage(sprite.sheet.hud.img, 0, 0, 128, 72, 0, 0, 128, 72);
                     // flipped cursor
                     var buf = cx.getImageData(64, 0, 16, 16);
-                    sprite._utl.flipH(buf);
+                    sprite._utl.mirV(buf);
                     cx.putImageData(buf, 80, 0);
+                    // flipped arrows
+                    buf = cx.getImageData(96, 24, 8, 8);
+                    sprite._utl.mirH(buf);
+                    cx.putImageData(buf, 112, 24);
+                    buf = cx.getImageData(104, 24, 8, 8);
+                    sprite._utl.mirV(buf);
+                    cx.putImageData(buf, 120, 24);
                     // green tint
                     buf = cx.getImageData(0, 24, 128, 48);
                     sprite._utl.mul(buf, 0, 1, 0, 1);
