@@ -171,48 +171,40 @@
                 img: document.createElement('img'),
                 tile: {
                     box_nw:     {x:   0, y:   0, w:  8, h:  8},
-                    box_nc:     {x:   8, y:   0, w: 16, h:  8},
-                    box_ne:     {x:  24, y:   0, w:  8, h:  8},
-                    box_cw:     {x:   0, y:   8, w:  8, h: 16},
-                    box_cc:     {x:   8, y:   8, w: 16, h: 16},
-                    box_ce:     {x:  24, y:   8, w:  8, h: 16},
-                    box_sw:     {x:   0, y:  24, w:  8, h:  8},
-                    box_sc:     {x:   8, y:  24, w: 16, h:  8},
-                    box_se:     {x:  24, y:  24, w:  8, h:  8},
-                    dmg_Miss:   {x: 112, y:  24, w: 16, h:  8},
-                    dmg_g_Miss: {x: 112, y:  72, w: 16, h:  8},
-                    dmg_r_Miss: {x: 112, y: 120, w: 16, h:  8}
+                    box_nc:     {x:   8, y:   0, w:  1, h:  8},
+                    box_ne:     {x:   8, y:   0, w:  8, h:  8},
+                    box_cw:     {x:   0, y:   8, w:  8, h:  1},
+                    box_cc:     {x:   8, y:   8, w:  1, h:  1},
+                    box_ce:     {x:   8, y:   8, w:  8, h:  1},
+                    box_sw:     {x:   0, y:   8, w:  8, h:  8},
+                    box_sc:     {x:   8, y:   8, w:  1, h:  8},
+                    box_se:     {x:   8, y:   8, w:  8, h:  8},
+                    dmg_Miss:   {x:  80, y:  24, w: 16, h:  8},
+                    dmg_g_Miss: {x:  80, y:  72, w: 16, h:  8},
+                    dmg_r_Miss: {x:  80, y: 120, w: 16, h:  8}
                 },
                 init: function() {
                     var cv = document.createElement('canvas');
                     cv.width = 128;
-                    cv.height = 72 + 40 * 3 + 8 * 2;
+                    cv.height = 72 + 40 * 3 + 8 * 2; // 5 lines of characters + 1 line dmg text
                     var cx = cv.getContext('2d');
                     cx.drawImage(sprite.sheet.hud.img, 0, 0, 128, 72, 0, 0, 128, 72);
                     // flipped cursor
-                    var buf = cx.getImageData(32, 0, 16, 16);
+                    var buf = cx.getImageData(64, 0, 16, 16);
                     sprite._utl.flipH(buf);
-                    cx.putImageData(buf, 96, 0);
-                    // text with green tint
-                    buf = cx.getImageData(0, 32, 128, 40);
+                    cx.putImageData(buf, 80, 0);
+                    // green tint
+                    buf = cx.getImageData(0, 24, 128, 48);
                     sprite._utl.mul(buf, 0, 1, 0, 1);
-                    cx.putImageData(buf, 0, 80);
-                    // text with red tint
-                    buf = cx.getImageData(0, 32, 128, 40);
+                    cx.putImageData(buf, 0, 72);
+                    // red tint
+                    buf = cx.getImageData(0, 24, 128, 48);
                     sprite._utl.mul(buf, 1, 0, 0, 1);
-                    cx.putImageData(buf, 0, 128);
-                    // text with yellow tint
+                    cx.putImageData(buf, 0, 120);
+                    // yellow tint
                     buf = cx.getImageData(0, 32, 128, 40);
                     sprite._utl.mul(buf, 1, 1, 0, 1);
                     cx.putImageData(buf, 0, 168);
-                    // status text with green tint
-                    buf = cx.getImageData(32, 24, 96, 8);
-                    sprite._utl.mul(buf, 0, 1, 0, 1);
-                    cx.putImageData(buf, 32, 72);
-                    // status text with red tint
-                    buf = cx.getImageData(32, 24, 96, 8);
-                    sprite._utl.mul(buf, 1, 0, 0, 1);
-                    cx.putImageData(buf, 32, 120);
                     // install new canvas
                     sprite.sheet.hud.img = cv;
                     if (db.val) {
@@ -221,25 +213,25 @@
                             dcv.getContext('2d').drawImage(cv, 0, 0);
                         }
                     }
-                    // generate tiles
-                    var i, j, id, tiles = 'cur,sel_0,sel_1,sel_2,cur_R'.split(',');
+                    // generate tile entries
+                    var i, j, id, tiles = 'sel_0,sel_1,sel_2,cur,cur_R'.split(',');
                     for (i = 0; i < tiles.length; i++) {
                         id = 'icon_' + tiles[i];
-                        sprite.sheet.hud.tile[id] = {x: 32 + 16 * i, y: 0, w: 16, h: 16};
+                        sprite.sheet.hud.tile[id] = {x: 16 + 16 * i, y: 0, w: 16, h: 16};
                     }
-                    tiles = '012345678LRF';
+                    tiles = 'lrLR012345678F';
                     for (i = 0; i < tiles.length; i++) {
                         id = 'bar_' + tiles[i];
-                        sprite.sheet.hud.tile[id] = {x: 32 + 8 * i, y: 16, w: 8, h: 8};
+                        sprite.sheet.hud.tile[id] = {x: 8 * i, y: 16, w: 8, h: 8};
                     }
                     tiles = '0123456789';
                     for (i = 0; i < tiles.length; i++) {
                         id = tiles[i];
-                        sprite.sheet.hud.tile['dmg_' + id] = {x: 32 + 8 * i, y: 24, w: 8, h: 8};
-                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 32 + 8 * i, y: 72, w: 8, h: 8};
-                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 32 + 8 * i, y: 120, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_' + id] = {x: 8 * i, y: 24, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 8 * i, y: 72, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
                     }
-                    tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()=~'];
+                    tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()%~='];
                     for (i = 0; i < tiles.length; i++) {
                         for (j = 0; j < tiles[i].length; j++) {
                             id = tiles[i][j];
@@ -254,7 +246,7 @@
             }
         }
     };
-    sprite.sheet.hud.img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABIBAMAAADMq+AhAAAAMFBMVEUBAAAAAAAYGCgoMDAoKIAwMIhQUFBwcHCAgIB4mJigsLCgwMDI4OD4+ADw+Pj4+Phd7QUbAAAAAXRSTlMAQObYZgAABQZJREFUWMO1Vj1vIzcQ5W6TkmSVchfbCQa2MQykSOnr0sUCUqRzYwRXJJV/gJorXLkTAqR2kSrdwcCVwcHwX0ijNoCw/AXMvPng0spG5w+EwojcFedxZt7MUG599TiPz5dr59qhdy8YPzx+mMfN3ZlzJ/vblwC8v7s8LePq4dK1v31cDcPzAW42Z2sbF6c3m7b9tL+/v3++Fw+XF+c23q3fb1arPcYthYIGcDAP1XwwPp+dz+Pdt5vx10/7v7fb3p2QHfd/UEy3GL1rGbj/AsB3m5HUPuKkVvScG0lvR/OJAB4FOP+RLLB9o+jx0QBql0NzCHCyJQtuVVH2n+jBq+0Sv4cAK7OcFNXgVg9ut/1zAFYFoLX9w8F8FKCl4L0oEw8BhP/h9QCDjrcC9K934UXaSwAvHYcA188YpKZfNL3Ogq+ur38+4kIgiRBaxAgJJBESIhbuOjTXeE/rJYCJJENokTNkIsmQKWPhfgnN1879ReP/seBNMXg7C8hiaYEi9NAit4Z55jV9Flsa2ki75xbYc0uhB/QmrG3mdT8ObU9gD08A3m/GHX1Ij2f6UGfrx90AKe/ksx9JendTt/WLGwZoFaAd6LQdn8zSDqNYwofsh3GgpvnTn9XFQjeTAbAyKYw2w5pBlAlkN2LAgm9+ry7Xx7vTAjDu7KTd7M7OCRCARzJg7N33V9Xl+uHyTIK1cyVggwSNA0q6VRDFgvXpk7EWuvqZMjfMlKLNzjS2zILPOVB6B5tJEoSfg09cDM4nrDOldsKaJtvvcuySSLQ5qrCS61IQAHyosAIdMLlkek6QBX2eTTwOFAt4LyozJzIhmZ4oZUPXNT+LKwUA1sIFQkp+qgDgc20BlSxLUBPtELUgRZ9olewwiYEApKcu6AkGoDHAi2RBRWswpK5mgTZ2MwvB1uw/A7jUqdvUdRpuLI10HO4y6ET8TL+hHdk6lp0uyjv3NA98iQedks015duJazJ05TkGhf/UdCkuAUS8zRJEzOw45swx0OAl6qN+zgsA+NhJ6Og9oMEqHSZZGy0TAZAV8QDAIQ1y4k1FCQypcqwtaDo56dACmIlcEhpLOgelEJJYYXK54twHi4HTDJwBfJmd8s2BA68AEFY4Q0MBKNUqLnlzOTPfFHrimNltLB/0JuI84HWw941kAj0HuboKq8yRURWOX0z1795Sks0JBUwuUzZZZ9rXZZoncY+uX9bMyi/fpmyBcdtN/FstKXIeEH0zJ0KJhhoAXVJuuzRHfqawU+7LG6mqCkDr+b8AGo1+edPEA4AlCywG3FBkr/yS5IUBSNcpMWAADmK0g+BCwpfmhb6g/x0BnII+IT5oXxC+rZilT8iX5MUCxV4rTPsEbJdZn7VvBCkQo6v4CkaoiPAeGRql1NBkfcKJ3XwfIO0x18GKUfK/YVekoXoDZjd8qpttw40CZZs1eFqNVToGPPDJyq+1Prkvqmh32ehRACQMKWp1zHcEzY2uWQyg4aJ2BQDryWkrn68xp7tQklw7Wvc5TE587bTWoYg1rtkSec1ca38sUvcxcD5o3esdIT3CResBXP9l3agQjPAuRr5mSO4vAfBz8nwj4u/38gFeWlMzdaFZAGDKAOAn/gvv82G7SoaTGKvewG4mtHbwjk18Z8Ll9MSAusfxBjcHmV2IlMcKwL/xjVIbcGCVr1j6ogv8FP8N0BTpgjRMCaJZeHTAd44H/4Fojir8AyqNSwYgbVTDAAAAAElFTkSuQmCC';
+    sprite.sheet.hud.img.src = 'data:image/png;base64,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';
     pending++;
     if (sprite.sheet.hud.img.complete) {
         sprite.sheet.hud.init();
