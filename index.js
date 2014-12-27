@@ -597,12 +597,10 @@
             case 2:
                 if (io.kb.up === io.raw) {
                     dc._sheet = (dc._sheet + dc._sheets.length - 1) % dc._sheets.length;
-                    dc._tiles = Object.keys(sprite.sheet[dc._sheets[dc._sheet]].tile);
-                    dc._tile = 0;
+                    dc._dumpTiles();
                 } else if (io.kb.down === io.raw) {
                     dc._sheet = (dc._sheet + 1) % dc._sheets.length;
-                    dc._tiles = Object.keys(sprite.sheet[dc._sheets[dc._sheet]].tile);
-                    dc._tile = 0;
+                    dc._dumpTiles();
                 } else if (io.kb.left === io.raw) {
                     dc._tile = (dc._tile + dc._tiles.length - 1) % dc._tiles.length;
                 } else if (io.kb.right === io.raw) {
@@ -615,13 +613,26 @@
                     + '\nsheet:' + dc._sheets[dc._sheet]
                     + '\ntile: ' + dc._tiles[dc._tile]
                 );
+                var sheet = sprite.sheet[dc._sheets[dc._sheet]];
+                var tile = sheet.tile[dc._tiles[dc._tile]];
+                cx.fillStyle = 'black';
+                cx.fillRect(0, 40, tile.w, tile.h);
+                cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, 0, 40, tile.w, tile.h);
         }
     }
+    dc._dump = function(obj) {
+        var arr = Object.keys(obj);
+        arr.sort();
+        return arr;
+    };
+    dc._dumpTiles = function() {
+        dc._tiles = dc._dump(sprite.sheet[dc._sheets[dc._sheet]].tile);
+        dc._tile = 0;
+    };
     dc._st = 0;
-    dc._sheets = Object.keys(sprite.sheet);
+    dc._sheets = dc._dump(sprite.sheet);
     dc._sheet = 0;
-    dc._tiles = Object.keys(sprite.sheet[dc._sheets[0]].tile);
-    dc._tile = 0;
+    dc._dumpTiles();
 
     function fadeAnim(dt) {
         var a = dt / fadeAnim.dt;
