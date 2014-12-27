@@ -824,6 +824,7 @@
                     units.rdy.push(unit);
                 }
             }
+            return dt;
         },
         mov: function(pos, spd, dt) {
             if (pos[1] < pos[2]) {
@@ -864,11 +865,17 @@
     };
 
     var heroes = {
-        upd: function(hero, dt, tile) {
-            units.act(hero, dt);
-            units.mov(hero.x, 0.16, dt);
-            units.mov(hero.y, 0.16, dt);
-            hero1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
+        upd: function(hero, dt) {
+            dt = units.act(hero, dt);
+            units.mov(hero.x, 0.08, dt);
+            units.mov(hero.y, 0.08, dt);
+            var tile;
+            if (hero.x[1] !== hero.x[2] || hero.y[1] !== hero.y[2]) {
+                tile = hero.aa[((dt * 0.01) | 0) % hero.aa.length];
+            } else {
+                tile = hero.aa[0];
+            }
+            hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
         },
         rst: function(hero, fb, x, dx, y, wait, name) {
             units.rst(hero, fb, x, y, ((prng() * 4) | 0) / 100 + 0.06, (prng() * 400 + 1200) | 0, wait);
@@ -878,16 +885,31 @@
     };
 
     function hero1(dt) {
-        heroes.upd(hero1, dt, sprite.sheet.btl1.tile.h0_a1);
+        heroes.upd(hero1, dt);
     }
+    hero1.rst = function(fb, x, dx, y, wait) {
+        heroes.rst(hero1, fb, x, dx, y, wait, 'Celes');
+        var tiles = sprite.sheet.btl1.tile;
+        hero1.aa = [tiles.h0_a1, tiles.h0_a2, tiles.h0_a1, tiles.h0_a0];
+    };
 
     function hero2(dt) {
-        heroes.upd(hero2, dt, sprite.sheet.btl1.tile.h1_a1);
+        heroes.upd(hero2, dt);
     }
+    hero2.rst = function(fb, x, dx, y, wait) {
+        heroes.rst(hero2, fb, x, dx, y, wait, 'Locke');
+        var tiles = sprite.sheet.btl1.tile;
+        hero2.aa = [tiles.h1_a1, tiles.h1_a2, tiles.h1_a1, tiles.h1_a0];
+    };
 
     function hero3(dt) {
-        heroes.upd(hero3, dt, sprite.sheet.btl1.tile.h2_a1);
+        heroes.upd(hero3, dt);
     }
+    hero3.rst = function(fb, x, dx, y, wait) {
+        heroes.rst(hero3, fb, x, dx, y, wait, 'Mog');
+        var tiles = sprite.sheet.btl1.tile;
+        hero3.aa = [tiles.h2_a1, tiles.h2_a2, tiles.h2_a1, tiles.h2_a0];
+    };
 
     function enemyDlg() {
         sprite.dlg(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
@@ -1022,11 +1044,11 @@
         q.add(enemy1, 1000, 0);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
         q.add(enemyDlg, 0, 0);
-        heroes.rst(hero1, scn.fb2, 265, -7, 36, 1000, 'Celes');
+        hero1.rst(scn.fb2, 265, -7, 36, 1000);
         q.add(hero1, 2000, 0);
-        heroes.rst(hero2, scn.fb2, 272, 0, 84, 1000, 'Locke');
+        hero2.rst(scn.fb2, 272, 0, 84, 1000);
         q.add(hero2, 2000, 0);
-        heroes.rst(hero3, scn.fb2, 279, 7, 132, 1000, 'Mog');
+        hero3.rst(scn.fb2, 279, 7, 132, 1000);
         q.add(hero3, 2000, 0);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         q.add(heroDlg, 0, 0);
