@@ -33,6 +33,7 @@
     };
 
     var sprite = {
+        anim: 0.01, // animation frame rate
         txtL: function(cx, x, y, sheet, txt) {
             var x0 = x, tbl = 'tw_';
             for (var i = 0; i < txt.length; i++) {
@@ -497,7 +498,7 @@
         prng._s ^= (prng._s << 21);
         prng._s ^= (prng._s >>> 35);
         prng._s ^= (prng._s << 4);
-        return (prng._s & 0xffffffff) / 0x100000000;
+        return (prng._s & 0x7ffffffe) / 0x7fffffff;
     }
     prng._s = (Date.now() ^ Math.random()) | 1;
 
@@ -852,8 +853,8 @@
         enemy1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, enemy1.x[0], enemy1.y[0], tile.w, tile.h);
         if (enemy1 === units.rdy[0]) {
             enemy1.act = 0;
-            units.rdy.shift();
             enemy1.actDt = dt;
+            units.rdy.shift();
         }
     }
     enemy1.rst = function(fb, x, y, wait) {
@@ -873,13 +874,23 @@
                     hero.st = 0;
                     units.rdy.shift();
                     units.rdy.push(hero);
+                } else if (undefined !== val) {
+                    hero.st = 2;
+                    hero.actDt = dt + healAct(hero, hero);
+                }
+            } else if (2 === hero.st) {
+                if (dt >= hero.actDt) {
+                    hero.st = 0;
+                    hero.act = 0;
+                    hero.actDt = dt;
+                    units.rdy.shift();
                 }
             }
-            units.mov(hero.x, 0.08, dt);
-            units.mov(hero.y, 0.08, dt);
+            units.mov(hero.x, hero.movSpd, dt);
+            units.mov(hero.y, hero.movSpd, dt);
             var tile;
             if (hero.x[1] !== hero.x[2] || hero.y[1] !== hero.y[2]) {
-                tile = hero.aa[((dt * 0.01) | 0) % hero.aa.length];
+                tile = hero.aa[((dt * sprite.anim) | 0) % hero.aa.length];
             } else {
                 tile = hero.aa[0];
             }
@@ -887,6 +898,7 @@
         },
         rst: function(hero, fb, x, dx, y, wait, name) {
             units.rst(hero, fb, x, y, ((prng() * 4) | 0) / 100 + 0.06, (prng() * 400 + 1200) | 0, wait);
+            hero.movSpd = 0.08;
             hero.x[0] = hero.x[1] = fb.cv.width + 16 + dx;
             hero.nam = name;
         }
@@ -918,6 +930,28 @@
         var tiles = sprite.sheet.btl1.tile;
         hero3.aa = [tiles.h2_a1, tiles.h2_a2, tiles.h2_a1, tiles.h2_a0];
     };
+
+    function healAct(src, tgt) {
+        var fn = function(dt) {
+            var f0 = (dt * sprite.anim) | 0;
+            if (f0 < fn._anim.length) {
+                var t0 = fn._anim[f0];
+                tgt.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    t0.x, t0.y, t0.w, t0.h,
+                    tgt.x[0] + 8 - (t0.w >> 1), tgt.y[0] + 12 - (t0.h >> 1), t0.w, t0.h
+                );
+            }
+        };
+        fn._anim = healAct._anim[(prng() * healAct._anim.length) | 0];
+        q.add(fn, 0, (fn._anim.length / sprite.anim) | 0);
+        return fn.dt;
+    }
+    healAct._anim = [
+        [sprite.sheet.btl1.tile.ih_g0, sprite.sheet.btl1.tile.ih_g1, sprite.sheet.btl1.tile.ih_g2, sprite.sheet.btl1.tile.ih_g3],
+        [sprite.sheet.btl1.tile.ih_p0, sprite.sheet.btl1.tile.ih_p1, sprite.sheet.btl1.tile.ih_p2, sprite.sheet.btl1.tile.ih_p3],
+        [sprite.sheet.btl1.tile.ih_r0, sprite.sheet.btl1.tile.ih_r1, sprite.sheet.btl1.tile.ih_r2, sprite.sheet.btl1.tile.ih_r3],
+    ];
 
     function enemyDlg() {
         var txt = enemyDlg._val.nam + '\n\n';
