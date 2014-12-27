@@ -808,8 +808,6 @@
         btlBgAnim._fb = fb;
     };
 
-    var actLst = [];
-
     var units = {
         rdy: [],
         act: function(unit, dt) {
@@ -817,6 +815,8 @@
                 unit.wait = 0;
                 unit.ts = tick.ts;
                 dt = 0;
+                unit.x[0] = unit.x[1] = unit.x[2];
+                unit.y[0] = unit.y[1] = unit.y[2];
             }
             if (0 === unit.wait && 100 > unit.act) {
                 unit.act = (unit.actSpd * dt) | 0;
@@ -861,7 +861,7 @@
     }
     enemy1.rst = function(fb, x, y, wait) {
         units.rst(enemy1, fb, x, y, 0.03, 48000, wait);
-        enemy1.x[1] = -32 - sprite.sheet.btl1.tile.e0.w;
+        enemy1.x[0] = enemy1.x[1] = -32 - sprite.sheet.btl1.tile.e0.w;
         enemy1.nam = 'Air Force';
     };
 
@@ -880,7 +880,7 @@
         },
         rst: function(hero, fb, x, dx, y, wait, name) {
             units.rst(hero, fb, x, y, ((prng() * 4) | 0) / 100 + 0.06, (prng() * 400 + 1200) | 0, wait);
-            hero.x[1] = fb.cv.width + 16 + dx;
+            hero.x[0] = hero.x[1] = fb.cv.width + 16 + dx;
             hero.nam = name;
         }
     };
@@ -926,12 +926,6 @@
     };
 
     function heroDlg() {
-        var sheet = sprite.sheet.hud;
-        sprite.dlg(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
-        sprite.txtL(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, heroDlg._txt0);
-        sprite.txtR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, heroDlg._txt1);
-    }
-    heroDlg.upd = function() {
         var txt0 = '', txt1 = '';
         for (var i = 0; i < heroDlg._lst.length; i++) {
             if (0 < heroDlg._lst[i].st) {
@@ -962,9 +956,11 @@
             }
             txt1 += '\n\n';
         }
-        heroDlg._txt0 = txt0;
-        heroDlg._txt1 = txt1;
-    };
+        var sheet = sprite.sheet.hud;
+        sprite.dlg(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
+        sprite.txtL(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, txt0);
+        sprite.txtR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, txt1);
+    }
     heroDlg.rst = function(fb, x, y, w, h, lst) {
         heroDlg._fb = fb;
         heroDlg._x = x;
@@ -1043,27 +1039,6 @@
     function btlScn() {
         scn.fb2.clr();
         scn.fb3.clr();
-        heroDlg.upd();
-        switch (btlScn._st) {
-            case 1:
-                var x = heroOpt1Dlg.upd();
-                if (-1 === x) {
-                    q.del(heroOpt1Dlg.qid);
-                    btlScn._st = 0;
-                    var hero = actLst.shift();
-                    actLst.push(hero);
-                }
-                break;
-            case 0:
-            default:
-                if (0 < actLst.length) {
-                    heroOpt1Dlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56, ['Attack', 'Special', 'Heal']);
-                    var id = q.add(heroOpt1Dlg, 0, 0);
-                    heroOpt1Dlg.qid = id;
-                    btlScn._st = 1;
-                }
-                break;
-        }
     }
     btlScn.rst = function() {
         btlScn._st = 0;
@@ -1071,16 +1046,16 @@
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
         msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
-        enemy1.rst(scn.fb2, 32, 48, 2000);
+        enemy1.rst(scn.fb2, 32, 48, 1900);
         q.add(enemy1, 1000, 0);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
         q.add(enemyDlg, 0, 0);
         // y = ( 240(framebuffer height) - 48(bottom dialog) - 72(top padding) ) / 4(divisions) * X (hero position) + 72(top padding) - 24(hero height)
-        hero1.rst(scn.fb2, 265, -7, 78, 1000);
+        hero1.rst(scn.fb2, 265, -7, 78, 900);
         q.add(hero1, 2000, 0);
-        hero2.rst(scn.fb2, 272, 0, 108, 1000);
+        hero2.rst(scn.fb2, 272, 0, 108, 900);
         q.add(hero2, 2000, 0);
-        hero3.rst(scn.fb2, 279, 7, 138, 1000);
+        hero3.rst(scn.fb2, 279, 7, 138, 900);
         q.add(hero3, 2000, 0);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         q.add(heroDlg, 0, 0);
