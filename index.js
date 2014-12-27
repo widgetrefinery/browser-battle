@@ -807,20 +807,100 @@
         btlBgAnim._fb = fb;
     };
 
+    var actLst = [];
+
+    var units = {
+        rdy: [],
+        act: function(unit, dt) {
+            if (0 < unit.wait && dt >= unit.wait) {
+                unit.wait = 0;
+                unit.ts = tick.ts;
+                dt = 0;
+            }
+            if (0 === unit.wait && 100 > unit.act) {
+                unit.act = (unit.actSpd * dt) | 0;
+                if (100 <= unit.act) {
+                    unit.act = 100;
+                    units.rdy.push(unit);
+                }
+            }
+        },
+        mov: function(pos, spd, dt) {
+            if (pos[1] < pos[2]) {
+                pos[0] = pos[1] + (spd * dt) | 0;
+                if (pos[0] >= pos[2]) {
+                    pos[0] = pos[1] = pos[2];
+                }
+            } else if (pos[1] > pos[2]) {
+                pos[0] = pos[1] - (spd * dt) | 0;
+                if (pos[0] <= pos[2]) {
+                    pos[0] = pos[1] = pos[2];
+                }
+            }
+        },
+        rst: function(unit, fb, x, y, actSpd, hp, wait) {
+            unit.fb = fb;
+            unit.x = [x, x, x, x];
+            unit.y = [y, y, y, y];
+            unit.act = 0;
+            unit.actSpd = actSpd;
+            unit.mhp = unit.chp = hp;
+            unit.wait = wait;
+            unit.st = 0;
+        }
+    };
+
+    function enemy1(dt) {
+        units.act(enemy1, dt);
+        units.mov(enemy1.x, 0.32, dt);
+        units.mov(enemy1.y, 0.32, dt);
+        var tile = sprite.sheet.btl1.tile.e0;
+        enemy1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, enemy1.x[0], enemy1.y[0], tile.w, tile.h);
+    }
+    enemy1.rst = function(fb, x, y, wait) {
+        units.rst(enemy1, fb, x, y, 0.03, 48000, wait);
+        enemy1.x[1] = -32 - sprite.sheet.btl1.tile.e0.w;
+        enemy1.nam = 'Air Force';
+    };
+
+    var heroes = {
+        upd: function(hero, dt, tile) {
+            units.act(hero, dt);
+            units.mov(hero.x, 0.16, dt);
+            units.mov(hero.y, 0.16, dt);
+            hero1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
+        },
+        rst: function(hero, fb, x, dx, y, wait, name) {
+            units.rst(hero, fb, x, y, ((prng() * 4) | 0) / 100 + 0.06, (prng() * 400 + 1200) | 0, wait);
+            hero.x[1] = fb.cv.width + 16 + dx;
+            hero.nam = name;
+        }
+    };
+
+    function hero1(dt) {
+        heroes.upd(hero1, dt, sprite.sheet.btl1.tile.h0_a1);
+    }
+
+    function hero2(dt) {
+        heroes.upd(hero2, dt, sprite.sheet.btl1.tile.h1_a1);
+    }
+
+    function hero3(dt) {
+        heroes.upd(hero3, dt, sprite.sheet.btl1.tile.h2_a1);
+    }
+
     function enemyDlg() {
         sprite.dlg(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
-        sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg.txt);
+        sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg._val.nam);
     }
-    enemyDlg.rst = function(fb, x, y, w, h, txt) {
+    enemyDlg.rst = function(fb, x, y, w, h, val) {
         enemyDlg._fb = fb;
         enemyDlg._x = x;
         enemyDlg._y = y;
         enemyDlg._w = w;
         enemyDlg._h = h;
-        enemyDlg.txt = txt;
+        enemyDlg._val = val;
     };
-
-    var actLst = [];
 
     function heroDlg() {
         var sheet = sprite.sheet.hud;
@@ -831,7 +911,7 @@
     heroDlg.upd = function() {
         var txt0 = '', txt1 = '';
         for (var i = 0; i < heroDlg._lst.length; i++) {
-            if (0 < actLst.length && heroDlg._lst[i] === actLst[0]) {
+            if (0 < heroDlg._lst[i].st) {
                 txt0 += '\x00ty';
             } else {
                 txt0 += '\x00tw';
@@ -843,7 +923,7 @@
                 txt1 += '\x00tw';
             }
             txt1 += heroDlg._lst[i].chp + '\x00tw/' + heroDlg._lst[i].mhp;
-            var t = (heroDlg._lst[i].chg * 0.24) | 0;
+            var t = (heroDlg._lst[i].act * 0.24) | 0;
             if (24 <= t) {
                 txt1 += '\x00byl888r';
             } else {
@@ -908,39 +988,8 @@
         heroOpt1Dlg._cur = 0;
     }
 
-    var heroes = {
-        upd: function(hero, dt) {
-            if (100 === hero.chg) {
-                return;
-            }
-            hero.chg = (hero.spd * dt / 200) | 0;
-            if (100 <= hero.chg) {
-                hero.chg = 100;
-                actLst.push(hero);
-            }
-        },
-        rst: function(hero, name) {
-            hero.nam = name;
-            hero.mhp = (prng() * 400 + 1200) | 0;
-            hero.chp = hero.mhp;
-            hero.spd = (prng() * 4 + 6) | 0;
-            hero.chg = 0;
-        }
-    };
-
-    function hero1(dt) {
-        heroes.upd(hero1, dt);
-    }
-
-    function hero2(dt) {
-        heroes.upd(hero2, dt);
-    }
-
-    function hero3(dt) {
-        heroes.upd(hero3, dt);
-    }
-
     function btlScn() {
+        scn.fb2.clr();
         scn.fb3.clr();
         heroDlg.upd();
         switch (btlScn._st) {
@@ -967,16 +1016,17 @@
     btlScn.rst = function() {
         btlScn._st = 0;
         q.rst();
-        scn.fb2.clr();
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
-        enemyDlg.rst(scn.fb2, 0, scn.fb2.cv.height - 56, 96, 56, 'Blackbird');
-        enemyDlg();
-        heroes.rst(hero1, 'Artist');
+        enemy1.rst(scn.fb2, 32, 48, 2000);
+        q.add(enemy1, 1000, 0);
+        enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
+        q.add(enemyDlg, 0, 0);
+        heroes.rst(hero1, scn.fb2, 265, -7, 36, 1000, 'Celes');
         q.add(hero1, 2000, 0);
-        heroes.rst(hero2, 'Engineer');
+        heroes.rst(hero2, scn.fb2, 272, 0, 84, 1000, 'Locke');
         q.add(hero2, 2000, 0);
-        heroes.rst(hero3, 'Product');
+        heroes.rst(hero3, scn.fb2, 279, 7, 132, 1000, 'Mog');
         q.add(hero3, 2000, 0);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         q.add(heroDlg, 0, 0);
