@@ -33,8 +33,8 @@
     };
 
     var sprite = {
-        drawText: function(cx, x, y, sheet, txt) {
-            var x0 = x;
+        txtL: function(cx, x, y, sheet, txt) {
+            var x0 = x, tbl = 'tw_';
             for (var i = 0; i < txt.length; i++) {
                 var id = txt[i];
                 if ('\n' === id) {
@@ -42,13 +42,18 @@
                     y += 8;
                     continue;
                 }
-                if (' ' === id[id.length - 1]) {
+                if (' ' === id) {
                     x += 8;
                     continue;
                 }
-                var tile = sheet.tile[id];
+                if ('\x00' === id) {
+                    tbl = txt[i + 1] + txt[i + 2] + '_';
+                    i += 2;
+                    continue;
+                }
+                var tile = sheet.tile[tbl + id];
                 if (!tile) {
-                    var err = 'invalid id:' + id + ' txt:' + txt;
+                    var err = 'invalid id:' + tbl + id + ' txt:' + txt;
                     console.log(err);
                     throw new Exception(err);
                 }
@@ -56,90 +61,113 @@
                 x += tile.w;
             }
         },
-        drawTextC: function(cx, x, y, sheet, txt) {
+        txtC: function(cx, x, y, sheet, txt) {
             // assumes all characters are 8px wide
-            var i, start, end = -1, x0 = x;
+            var i, start, end = -1, dx, tbl = 'tw_';
             while (end < txt.length) {
                 start = end + 1;
                 end = txt.length;
+                dx = x;
                 for (i = start; i < txt.length; i++) {
                     if ('\n' === txt[i]) {
                         end = i;
                         break;
                     }
+                    if ('\x00' === txt[i]) {
+                        i += 2;
+                    } else {
+                        dx -= 4;
+                    }
                 }
-                x = x0 - (end - start) * 4;
                 for (i = start; i < end; i++) {
                     var id = txt[i];
-                    if (' ' === id[id.length - 1]) {
-                        x += 8;
+                    if (' ' === id) {
+                        dx += 8;
                         continue;
                     }
-                    var tile = sheet.tile[id];
+                    if ('\x00' === id) {
+                        tbl = txt[i + 1] + txt[i + 2] + '_';
+                        i += 2;
+                        continue;
+                    }
+                    var tile = sheet.tile[tbl + id];
                     if (!tile) {
-                        var err = 'invalid id:' + id + ' txt:' + txt;
+                        var err = 'invalid id:' + tbl + id + ' txt:' + txt;
                         console.log(err);
                         throw new Exception(err);
                     }
-                    cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, x, y, tile.w, tile.h);
-                    x += tile.w;
+                    cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, dx, y, tile.w, tile.h);
+                    dx += tile.w;
                 }
                 y += 8;
             }
         },
-        drawTextR: function(cx, x, y, sheet, txt) {
-            var i, start, end = -1, x0 = x;
+        txtR: function(cx, x, y, sheet, txt) {
+            // assumes all characters are 8px wide
+            var i, start, end = -1, dx, tbl = 'tw_';
             while (end < txt.length) {
                 start = end + 1;
                 end = txt.length;
+                dx = x;
                 for (i = start; i < txt.length; i++) {
                     if ('\n' === txt[i]) {
                         end = i;
                         break;
                     }
+                    if ('\x00' === txt[i]) {
+                        i += 2;
+                    } else {
+                        dx -= 8;
+                    }
                 }
-                x = x0;
-                for (i = end - 1; i >= start; i--) {
+                for (i = start; i < end; i++) {
                     var id = txt[i];
-                    if (' ' === id[id.length - 1]) {
-                        x -= 8;
+                    if (' ' === id) {
+                        dx += 8;
                         continue;
                     }
-                    var tile = sheet.tile[id];
+                    if ('\x00' === id) {
+                        tbl = txt[i + 1] + txt[i + 2] + '_';
+                        i += 2;
+                        continue;
+                    }
+                    var tile = sheet.tile[tbl + id];
                     if (!tile) {
-                        var err = 'invalid id:' + id + ' txt:' + txt;
+                        var err = 'invalid id:' + tbl + id + ' txt:' + txt;
                         console.log(err);
                         throw new Exception(err);
                     }
-                    x -= tile.w;
-                    cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, x, y, tile.w, tile.h);
+                    cx.drawImage(sheet.img, tile.x, tile.y, tile.w, tile.h, dx, y, tile.w, tile.h);
+                    dx += tile.w;
                 }
                 y += 8;
             }
         },
-        drawDialog: function(cx, x, y, w, h, sheet) {
-            var nw = sheet.tile.box_nw, nc = sheet.tile.box_nc, ne = sheet.tile.box_ne;
-            var cw = sheet.tile.box_cw, cc = sheet.tile.box_cc, ce = sheet.tile.box_ce;
-            var sw = sheet.tile.box_sw, sc = sheet.tile.box_sc, se = sheet.tile.box_se;
-            var y0 = y, w0 = w, h0 = h;
-            w -= nw.w + ne.w;
-            h -= nw.h + sw.h;
-            cx.drawImage(sheet.img, nw.x, nw.y, nw.w, nw.h, x, y, nw.w, nw.h);
-            cx.drawImage(sheet.img, nc.x, nc.y, nc.w, nc.h, x + nw.w, y, w, nc.h);
-            cx.drawImage(sheet.img, ne.x, ne.y, ne.w, ne.h, x + nw.w + w, y, ne.w, ne.h);
-            y += nw.h;
-            cx.drawImage(sheet.img, cw.x, cw.y, cw.w, cw.h, x, y, cw.w, h);
-            cx.drawImage(sheet.img, cc.x, cc.y, cc.w, cc.h, x + nw.w, y, w, h);
-            cx.drawImage(sheet.img, ce.x, ce.y, ce.w, ce.h, x + nw.w + w, y, ce.w, h);
-            y += h;
-            cx.drawImage(sheet.img, sw.x, sw.y, sw.w, sw.h, x, y, sw.w, sw.h);
-            cx.drawImage(sheet.img, sc.x, sc.y, sc.w, sc.h, x + nw.w, y, w, sc.h);
-            cx.drawImage(sheet.img, se.x, se.y, se.w, se.h, x + nw.w + w, y, se.w, se.h);
-            var g = cx.createLinearGradient(x, y0, x, y0 + h0);
+        dlg: function(cx, x, y, w, h, sheet) {
+            var nw = sheet.tile.wb_7, nc = sheet.tile.wb_8, ne = sheet.tile.wb_9;
+            var cw = sheet.tile.wb_4, cc = sheet.tile.wb_5, ce = sheet.tile.wb_6;
+            var sw = sheet.tile.wb_1, sc = sheet.tile.wb_2, se = sheet.tile.wb_3;
+            var x1 = x + nw.w;
+            var x2 = x + w - ne.w;
+            var dy = y;
+            var dw = w - nw.w - ne.w;
+            var dh = h - nw.h - sw.h;
+            cx.drawImage(sheet.img, nw.x, nw.y, nw.w, nw.h, x, dy, nw.w, nw.h);
+            cx.drawImage(sheet.img, nc.x, nc.y, nc.w, nc.h, x1, dy, dw, nc.h);
+            cx.drawImage(sheet.img, ne.x, ne.y, ne.w, ne.h, x2, dy, ne.w, ne.h);
+            dy += nw.h;
+            cx.drawImage(sheet.img, cw.x, cw.y, cw.w, cw.h, x, dy, cw.w, dh);
+            cx.drawImage(sheet.img, cc.x, cc.y, cc.w, cc.h, x1, dy, dw, dh);
+            cx.drawImage(sheet.img, ce.x, ce.y, ce.w, ce.h, x2, dy, ce.w, dh);
+            dy += dh;
+            cx.drawImage(sheet.img, sw.x, sw.y, sw.w, sw.h, x, dy, sw.w, sw.h);
+            cx.drawImage(sheet.img, sc.x, sc.y, sc.w, sc.h, x1, dy, dw, sc.h);
+            cx.drawImage(sheet.img, se.x, se.y, se.w, se.h, x2, dy, se.w, se.h);
+            var g = cx.createLinearGradient(x, y, x, y + h);
             g.addColorStop(0.2, 'rgba(200,200,200,0.25)');
             g.addColorStop(0.8, 'rgba(0,0,0,0.25)');
             cx.fillStyle = g;
-            cx.fillRect(x, y0, w0, h0);
+            cx.fillRect(x, y, w, h);
         },
         _utl: {
             init: function(sheet, src) {
@@ -192,30 +220,18 @@
             hud: {
                 img: document.createElement('img'),
                 tile: {
-                    box_nw:     {x:   0, y:   0, w:  8, h:  8},
-                    box_nc:     {x:   8, y:   0, w:  1, h:  8},
-                    box_ne:     {x:   8, y:   0, w:  8, h:  8},
-                    box_cw:     {x:   0, y:   8, w:  8, h:  1},
-                    box_cc:     {x:   8, y:   8, w:  1, h:  1},
-                    box_ce:     {x:   8, y:   8, w:  8, h:  1},
-                    box_sw:     {x:   0, y:   8, w:  8, h:  8},
-                    box_sc:     {x:   8, y:   8, w:  1, h:  8},
-                    box_se:     {x:   8, y:   8, w:  8, h:  8},
-                    dmg_M:      {x:  80, y:  24, w: 16, h:  8},
-                    up:         {x:  96, y:  24, w:  8, h:  8},
-                    right:      {x: 104, y:  24, w:  8, h:  8},
-                    down:       {x: 112, y:  24, w:  8, h:  8},
-                    left:       {x: 120, y:  24, w:  8, h:  8},
-                    dmg_g_M:    {x:  80, y:  72, w: 16, h:  8},
-                    g_up:       {x:  96, y:  72, w:  8, h:  8},
-                    g_right:    {x: 104, y:  72, w:  8, h:  8},
-                    g_down:     {x: 112, y:  72, w:  8, h:  8},
-                    g_left:     {x: 120, y:  72, w:  8, h:  8},
-                    dmg_r_M:    {x:  80, y: 120, w: 16, h:  8},
-                    r_up:       {x:  96, y: 120, w:  8, h:  8},
-                    r_right:    {x: 104, y: 120, w:  8, h:  8},
-                    r_down:     {x: 112, y: 120, w:  8, h:  8},
-                    r_left:     {x: 120, y: 120, w:  8, h:  8}
+                    wb_7: {x:   0, y:   0, w:  8, h:  8},
+                    wb_8: {x:   8, y:   0, w:  1, h:  8},
+                    wb_9: {x:   8, y:   0, w:  8, h:  8},
+                    wb_4: {x:   0, y:   8, w:  8, h:  1},
+                    wb_5: {x:   8, y:   8, w:  1, h:  1},
+                    wb_6: {x:   8, y:   8, w:  8, h:  1},
+                    wb_1: {x:   0, y:   8, w:  8, h:  8},
+                    wb_2: {x:   8, y:   8, w:  1, h:  8},
+                    wb_3: {x:   8, y:   8, w:  8, h:  8},
+                    dw_m: {x:  80, y:  24, w: 16, h:  8},
+                    dg_m: {x:  80, y:  72, w: 16, h:  8},
+                    dr_m: {x:  80, y: 120, w: 16, h:  8}
                 },
                 init: function() {
                     var cv = document.createElement('canvas');
@@ -261,32 +277,48 @@
                             dcv.getContext('2d').drawImage(cv, 0, 0);
                         }
                     }
-                    // generate tile entries
-                    var i, j, id, tiles = 'sel_0,sel_1,sel_2,cur,cur_R'.split(',');
+                    // icon tiles
+                    var i, j, id, tiles = 'sel0,sel1,sel2,curR,curL'.split(',');
                     for (i = 0; i < tiles.length; i++) {
                         id = 'icon_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 16 + 16 * i, y: 0, w: 16, h: 16};
                     }
-                    tiles = 'lr012345678LRF';
+                    // bar tiles
+                    tiles = 'lr012345678';
                     for (i = 0; i < tiles.length; i++) {
-                        id = 'bar_' + tiles[i];
+                        id = 'bw_' + tiles[i];
                         sprite.sheet.hud.tile[id] = {x: 8 * i, y: 16, w: 8, h: 8};
                     }
+                    tiles = 'lr8';
+                    for (i = 0; i < tiles.length; i++) {
+                        id = 'by_' + tiles[i];
+                        sprite.sheet.hud.tile[id] = {x: 88 + 8 * i, y: 16, w: 8, h: 8};
+                    }
+                    // damage tiles
                     tiles = '0123456789';
                     for (i = 0; i < tiles.length; i++) {
                         id = tiles[i];
-                        sprite.sheet.hud.tile['dmg_' + id] = {x: 8 * i, y: 24, w: 8, h: 8};
-                        sprite.sheet.hud.tile['dmg_g_' + id] = {x: 8 * i, y: 72, w: 8, h: 8};
-                        sprite.sheet.hud.tile['dmg_r_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dw_' + id] = {x: 8 * i, y: 24, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dg_' + id] = {x: 8 * i, y: 72, w: 8, h: 8};
+                        sprite.sheet.hud.tile['dr_' + id] = {x: 8 * i, y: 120, w: 8, h: 8};
                     }
+                    // arrow tiles
+                    tiles = 'urdl';
+                    for (i = 0; i < tiles.length; i++) {
+                        id = tiles[i];
+                        sprite.sheet.hud.tile['aw_' + id] = {x: 96 + 8 * i, y: 24, w: 8, h: 8};
+                        sprite.sheet.hud.tile['ag_' + id] = {x: 96 + 8 * i, y: 72, w: 8, h: 8};
+                        sprite.sheet.hud.tile['ar_' + id] = {x: 96 + 8 * i, y: 120, w: 8, h: 8};
+                    }
+                    // text tiles
                     tiles = ['ABCDEFGHIJKLMNOP', 'QRSTUVWXYZabcdef', 'ghijklmnopqrstuv', 'wxyz0123456789!?', '/:"\'-.,;#+()%~=_'];
                     for (i = 0; i < tiles.length; i++) {
                         for (j = 0; j < tiles[i].length; j++) {
                             id = tiles[i][j];
-                            sprite.sheet.hud.tile[id] = {x: 8 * j, y: 32 + 8 * i, w: 8, h: 8};
-                            sprite.sheet.hud.tile['g_' + id] = {x: 8 * j, y: 80 + 8 * i, w: 8, h: 8};
-                            sprite.sheet.hud.tile['r_' + id] = {x: 8 * j, y: 128 + 8 * i, w: 8, h: 8};
-                            sprite.sheet.hud.tile['y_' + id] = {x: 8 * j, y: 168 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['tw_' + id] = {x: 8 * j, y: 32 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['tg_' + id] = {x: 8 * j, y: 80 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['tr_' + id] = {x: 8 * j, y: 128 + 8 * i, w: 8, h: 8};
+                            sprite.sheet.hud.tile['ty_' + id] = {x: 8 * j, y: 168 + 8 * i, w: 8, h: 8};
                         }
                     }
                     pending--;
@@ -591,8 +623,8 @@
         switch(dc._st) {
             case 1:
                 var fps = (1000 / tick.dt) | 0;
-                sprite.drawDialog(cx, 0, 0, 64, 32, sprite.sheet.hud);
-                sprite.drawText(cx, 8, 8, sprite.sheet.hud, 'Pg1\nfps:' + fps);
+                sprite.dlg(cx, 0, 0, 64, 32, sprite.sheet.hud);
+                sprite.txtL(cx, 8, 8, sprite.sheet.hud, 'Pg1\nfps:' + fps);
                 break;
             case 2:
                 if (io.kb.up === io.raw) {
@@ -606,8 +638,8 @@
                 } else if (io.kb.right === io.raw) {
                     dc._tile = (dc._tile + 1) % dc._tiles.length;
                 }
-                sprite.drawDialog(cx, 0, 0, 128, 40, sprite.sheet.hud);
-                sprite.drawText(
+                sprite.dlg(cx, 0, 0, 136, 40, sprite.sheet.hud);
+                sprite.txtL(
                     cx, 8, 8, sprite.sheet.hud,
                     'Pg2'
                     + '\nsheet:' + dc._sheets[dc._sheet]
@@ -711,8 +743,8 @@
     };
 
     function enemyDlg() {
-        sprite.drawDialog(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
-        sprite.drawText(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg.txt);
+        sprite.dlg(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
+        sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg.txt);
     }
     enemyDlg.rst = function(fb, x, y, w, h, txt) {
         enemyDlg._fb = fb;
@@ -727,60 +759,40 @@
 
     function heroDlg() {
         var sheet = sprite.sheet.hud;
-        sprite.drawDialog(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
-        sprite.drawText(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, heroDlg._txt0);
-        sprite.drawTextR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, heroDlg._txt1);
+        sprite.dlg(heroDlg._fb.cx, heroDlg._x, heroDlg._y, heroDlg._w, heroDlg._h, sheet);
+        sprite.txtL(heroDlg._fb.cx, heroDlg._x + 8, heroDlg._y + 8, sheet, heroDlg._txt0);
+        sprite.txtR(heroDlg._fb.cx, heroDlg._x + heroDlg._w - 8, heroDlg._y + 8, sheet, heroDlg._txt1);
     }
     heroDlg.upd = function() {
-        var txt0 = [], txt1 = [];
+        var txt0 = '', txt1 = '';
         for (var i = 0; i < heroDlg._lst.length; i++) {
-            var t = heroDlg._lst[i].nam.split('');
             if (0 < actLst.length && heroDlg._lst[i] === actLst[0]) {
-                for (var j = 0; j < t.length; j++) {
-                    t[j] = 'y_' + t[j];
-                }
-            }
-            txt0 = txt0.concat(t);
-            txt0.push('\n');
-            txt0.push('\n');
-            t = heroDlg._lst[i].chp;
-            t = ('' + t).split('');
-            if (heroDlg._lst[i].chp === heroDlg._lst[i].mhp) {
-                for (j = 0; j < t.length; j++) {
-                    t[j] = 'g_' + t[j];
-                }
-            } else if (heroDlg._lst[i].chp <= heroDlg._lst[i].mhp * 0.25) {
-                for (j = 0; j < t.length; j++) {
-                    t[j] = 'r_' + t[j];
-                }
-            }
-            txt1 = txt1.concat(t);
-            txt1.push('/');
-            t = heroDlg._lst[i].mhp;
-            t = ('' + t).split('');
-            txt1 = txt1.concat(t);
-            txt1.push('bar_L');
-            t = (heroDlg._lst[i].chg * 0.24) | 0;
-            if (24 <= t) {
-                txt1.push('bar_F');
-                txt1.push('bar_F');
-                txt1.push('bar_F');
-            } else if (16 <= t) {
-                txt1.push('bar_8');
-                txt1.push('bar_8');
-                txt1.push('bar_' + (t - 16));
-            } else if (8 <= t) {
-                txt1.push('bar_8');
-                txt1.push('bar_' + (t - 8));
-                txt1.push('bar_0');
+                txt0 += '\x00ty';
             } else {
-                txt1.push('bar_' + t);
-                txt1.push('bar_0');
-                txt1.push('bar_0');
+                txt0 += '\x00tw';
             }
-            txt1.push('bar_R');
-            txt1.push('\n');
-            txt1.push('\n');
+            txt0 += heroDlg._lst[i].nam + '\n\n';
+            if (heroDlg._lst[i].chp === heroDlg._lst[i].mhp) {
+                txt1 += '\x00tg';
+            } else {
+                txt1 += '\x00tw';
+            }
+            txt1 += heroDlg._lst[i].chp + '\x00tw/' + heroDlg._lst[i].mhp;
+            var t = (heroDlg._lst[i].chg * 0.24) | 0;
+            if (24 <= t) {
+                txt1 += '\x00byl888r';
+            } else {
+                txt1 += '\x00bwl';
+                if (16 <= t) {
+                    txt1 += '88' + (t - 16);
+                } else if (8 <= t) {
+                    txt1 += '8' + (t - 8) + '0';
+                } else {
+                    txt1 += t + '00';
+                }
+                txt1 += 'r';
+            }
+            txt1 += '\n\n';
         }
         heroDlg._txt0 = txt0;
         heroDlg._txt1 = txt1;
@@ -797,9 +809,9 @@
     function heroOpt1Dlg() {
         var cx = heroOpt1Dlg._fb.cx;
         var sheet = sprite.sheet.hud;
-        var cur = sheet.tile.icon_cur;
-        sprite.drawDialog(cx, heroOpt1Dlg._x, heroOpt1Dlg._y, heroOpt1Dlg._w, heroOpt1Dlg._h, sheet);
-        sprite.drawText(cx, heroOpt1Dlg._x + 16, heroOpt1Dlg._y + 8, sheet, heroOpt1Dlg._txt);
+        var cur = sheet.tile.icon_curR;
+        sprite.dlg(cx, heroOpt1Dlg._x, heroOpt1Dlg._y, heroOpt1Dlg._w, heroOpt1Dlg._h, sheet);
+        sprite.txtL(cx, heroOpt1Dlg._x + 16, heroOpt1Dlg._y + 8, sheet, heroOpt1Dlg._txt);
         cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOpt1Dlg._x, heroOpt1Dlg._y + 4 + 16 * heroOpt1Dlg._cur, cur.w, cur.h);
     }
     heroOpt1Dlg.upd = function() {
