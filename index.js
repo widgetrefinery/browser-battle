@@ -517,8 +517,9 @@
                 continue;
             }
             var dt = tick.ts - q._lst[i].ts;
-            q._lst[i](dt);
-            if (0 < q._lst[i].dt && dt >= q._lst[i].dt) {
+            var isLast = 0 < q._lst[i].dt && dt >= q._lst[i].dt;
+            q._lst[i](dt, isLast);
+            if (isLast) {
                 delete q._lst[i];
                 q.size--;
             }
@@ -1010,6 +1011,35 @@
         heroOpt1Dlg._cur = 0;
     }
 
+    function msgDlg(dt, isLast) {
+        if (msgDlg._txt) {
+            var cx = msgDlg._fb.cx;
+            var sheet = sprite.sheet.hud;
+            sprite.dlg(cx, msgDlg._x, msgDlg._y, msgDlg._w, msgDlg._h, sheet);
+            sprite.txtC(cx, msgDlg._x + (msgDlg._w >> 1), msgDlg._y + 8, sheet, msgDlg._txt);
+        }
+        if (isLast) {
+            msgDlg._qid = undefined;
+        }
+    }
+    msgDlg.show = function(txt, ts, dt) {
+        if (msgDlg._qid) {
+            q.del(msgDlg._qid);
+            msgDlg._qid = undefined;
+        }
+        msgDlg._txt = txt;
+        msgDlg._qid = q.add(msgDlg, ts, dt);
+    };
+    msgDlg.rst = function(fb, x, y, w, h) {
+        msgDlg._fb = fb;
+        msgDlg._x = x;
+        msgDlg._y = y;
+        msgDlg._w = w;
+        msgDlg._h = h;
+        msgDlg._qid = undefined;
+        msgDlg._txt = undefined;
+    };
+
     function btlScn() {
         scn.fb2.clr();
         scn.fb3.clr();
@@ -1040,15 +1070,17 @@
         q.rst();
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
+        msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
         enemy1.rst(scn.fb2, 32, 48, 2000);
         q.add(enemy1, 1000, 0);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
         q.add(enemyDlg, 0, 0);
-        hero1.rst(scn.fb2, 265, -7, 36, 1000);
+        // y = ( 240(framebuffer height) - 48(bottom dialog) - 72(top padding) ) / 4(divisions) * X (hero position) + 72(top padding) - 24(hero height)
+        hero1.rst(scn.fb2, 265, -7, 78, 1000);
         q.add(hero1, 2000, 0);
-        hero2.rst(scn.fb2, 272, 0, 84, 1000);
+        hero2.rst(scn.fb2, 272, 0, 108, 1000);
         q.add(hero2, 2000, 0);
-        hero3.rst(scn.fb2, 279, 7, 132, 1000);
+        hero3.rst(scn.fb2, 279, 7, 138, 1000);
         q.add(hero3, 2000, 0);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         q.add(heroDlg, 0, 0);
