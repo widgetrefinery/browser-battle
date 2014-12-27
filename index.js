@@ -263,7 +263,7 @@
                     cx.putImageData(buf, 0, 72);
                     // red tint
                     buf = cx.getImageData(0, 24, 128, 48);
-                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0xf8, 0x0, 0x0]]);
+                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0xf8, 0x90, 0x0]]);
                     cx.putImageData(buf, 0, 120);
                     // yellow tint
                     buf = cx.getImageData(0, 32, 128, 40);
@@ -327,85 +327,106 @@
             btl1: {
                 img: document.createElement('img'),
                 tile: {
-                    // locke normal
-                    h0_n_0:     {x:   0, y:   0, w: 16, h:  24},
-                    h0_n_1:     {x:  16, y:   0, w: 16, h:  24},
-                    h0_n_2:     {x:  32, y:   0, w: 16, h:  24},
-                    // locke hurt
-                    h0_h_0:     {x:  48, y:   0, w: 16, h:  24},
-                    h0_h_1:     {x:  64, y:   0, w: 16, h:  24},
-                    // locke weak, dead
-                    h0_w:       {x:  80, y:   0, w: 16, h:  24},
-                    h0_d:       {x:  96, y:   0, w: 16, h:  24},
-                    // celes normal
-                    h1_n_0:     {x:   0, y:  24, w: 16, h:  24},
-                    h1_n_1:     {x:  16, y:  24, w: 16, h:  24},
-                    h1_n_2:     {x:  32, y:  24, w: 16, h:  24},
-                    // celes hurt
-                    h1_h_0:     {x:  48, y:  24, w: 16, h:  24},
-                    h1_h_1:     {x:  64, y:  24, w: 16, h:  24},
-                    // celes weak, dead
-                    h1_w:       {x:  80, y:  24, w: 16, h:  24},
-                    h1_d:       {x:  96, y:  24, w: 16, h:  24},
-                    // mog normal
-                    h2_n_0:     {x:   0, y:  48, w: 16, h:  24},
-                    h2_n_1:     {x:  16, y:  48, w: 16, h:  24},
-                    h2_n_2:     {x:  32, y:  48, w: 16, h:  24},
-                    // mog hurt
-                    h2_h_0:     {x:  48, y:  48, w: 16, h:  24},
-                    h2_h_1:     {x:  64, y:  48, w: 16, h:  24},
-                    // mog weak, dead
-                    h2_w:       {x:  80, y:  48, w: 16, h:  24},
-                    h2_d:       {x:  96, y:  48, w: 16, h:  24},
-                    // energy bars
-                    bar_g:      {x: 176, y:   0, w:  6, h:  48},
-                    bar_r:      {x: 184, y:   0, w:  6, h:  48},
-                    bar_p:      {x: 176, y:  48, w:  6, h:  48},
-                    bar_w:      {x: 184, y:  48, w:  6, h:  48},
-                    // missile
-                    mis:        {x: 128, y:  73, w:  16, h:  5},
-                    mis_0:      {x: 144, y:  73, w:   3, h:  5},
-                    mis_1:      {x: 152, y:  73, w:   4, h:  5},
-                    mis_2:      {x: 160, y:  73, w:   8, h:  5},
-                    mis_3:      {x: 168, y:  73, w:   7, h:  5},
-                    // magitek beam: outer
-                    mb_o_0:     {x: 112, y:   0, w:  16, h: 24},
-                    mb_o_1:     {x: 128, y:   0, w:  16, h: 24},
-                    mb_o_2:     {x: 144, y:   0, w:  16, h: 24},
-                    mb_o_3:     {x: 160, y:   0, w:  16, h: 24},
-                    mb_o_4:     {x: 112, y:  24, w:  16, h: 24},
-                    mb_o_5:     {x: 128, y:  24, w:  16, h: 24},
-                    mb_o_6:     {x: 144, y:  24, w:  16, h: 24},
-                    mb_o_7:     {x: 160, y:  24, w:  16, h: 24},
+                    // locke: active
+                    h0_a0:  {x:   0, y:   0, w: 16, h: 24},
+                    h0_a1:  {x:  16, y:   0, w: 16, h: 24},
+                    h0_a2:  {x:  32, y:   0, w: 16, h: 24},
+                    // locke: hurt
+                    h0_h0:  {x:  48, y:   0, w: 16, h: 24},
+                    h0_h1:  {x:  64, y:   0, w: 16, h: 24},
+                    // locke: low energy, passed out, victory
+                    h0_l:   {x:  80, y:   0, w: 16, h: 24},
+                    h0_p:   {x:  96, y:   0, w: 16, h: 24},
+                    h0_v:   {x: 112, y:   0, w: 16, h: 24},
+                    // celes: active
+                    h1_a0:  {x:   0, y:  24, w: 16, h: 24},
+                    h1_a1:  {x:  16, y:  24, w: 16, h: 24},
+                    h1_a2:  {x:  32, y:  24, w: 16, h: 24},
+                    // celes: hurt
+                    h1_h0:  {x:  48, y:  24, w: 16, h: 24},
+                    h1_h1:  {x:  64, y:  24, w: 16, h: 24},
+                    // celes: low energy, passed out, victory
+                    h1_l:   {x:  80, y:  24, w: 16, h: 24},
+                    h1_p:   {x:  96, y:  24, w: 16, h: 24},
+                    h1_v:   {x: 112, y:  24, w: 16, h: 24},
+                    // mog: active
+                    h2_a0:  {x:   0, y:  48, w: 16, h: 24},
+                    h2_a1:  {x:  16, y:  48, w: 16, h: 24},
+                    h2_a2:  {x:  32, y:  48, w: 16, h: 24},
+                    // mog: hurt
+                    h2_h0:  {x:  48, y:  48, w: 16, h: 24},
+                    h2_h1:  {x:  64, y:  48, w: 16, h: 24},
+                    // mog: low energy, passed out, victory
+                    h2_l:   {x:  80, y:  48, w: 16, h: 24},
+                    h2_p:   {x:  96, y:  48, w: 16, h: 24},
+                    h2_v:   {x: 112, y:  48, w: 16, h: 24},
+                    // air force
+                    e0:     {x:   0, y:  72, w: 96, h: 96},
+                     // weapon slash: sword
+                    ws00:   {x:  96, y:  72, w: 32, h: 48},
+                    ws01:   {x: 128, y:  72, w: 32, h: 48},
+                    ws02:   {x: 160, y:  72, w: 32, h: 48},
+                    // weapon slash: wand
+                    ws10:   {x: 128, y: 120, w: 32, h: 24},
+                    ws11:   {x: 160, y: 120, w: 32, h: 24},
+                    ws12:   {x: 128, y: 144, w: 32, h: 24},
+                    // rising bars: purple, white, green, red
+                    rb_p:   {x:  96, y: 120, w:  6, h: 48},
+                    rb_w:   {x: 104, y: 120, w:  6, h: 48},
+                    rb_g:   {x: 112, y: 120, w:  6, h: 48},
+                    rb_r:   {x: 120, y: 120, w:  6, h: 48},
+                    // missile: body, exhaust, reticle
+                    mb:     {x: 128, y:  65, w: 16, h:  5},
+                    me0:    {x: 144, y:  65, w:  3, h:  5},
+                    me1:    {x: 152, y:  65, w:  4, h:  5},
+                    me2:    {x: 160, y:  65, w:  8, h:  5},
+                    me3:    {x: 168, y:  65, w:  7, h:  5},
+                    mr0:    {x: 128, y:  32, w: 16, h: 16},
+                    mr1:    {x: 144, y:  32, w: 16, h: 16},
+                    mr2:    {x: 160, y:  32, w: 16, h: 16},
+                    mr3:    {x: 176, y:  32, w: 16, h: 16},
+                    mr4:    {x: 128, y:  48, w: 16, h: 16},
+                    mr5:    {x: 144, y:  48, w: 16, h: 16},
+                    mr6:    {x: 160, y:  48, w: 16, h: 16},
+                    mr7:    {x: 176, y:  48, w: 16, h: 16},
+                    // damage burst
+                    db0:    {x: 160, y: 144, w: 16, h: 16},
+                    db1:    {x: 176, y: 144, w: 16, h: 16},
+                    db2:    {x: 128, y:   0, w: 32, h: 32},
+                    db3:    {x: 160, y:   0, w: 32, h: 32},
                     // magitek beam: inner
-                    mb_i_0:     {x: 114, y:  72, w:   1, h:  8},
-                    mb_i_1:     {x: 113, y:  72, w:   1, h:  8},
-                    mb_i_2:     {x: 112, y:  72, w:   1, h:  8},
-                    mb_i_3:     {x: 112, y:  48, w:  16, h: 24},
-                    mb_i_4:     {x: 128, y:  48, w:  16, h: 24},
-                    mb_i_5:     {x: 144, y:  48, w:  16, h: 24},
-                    mb_i_6:     {x: 160, y:  48, w:  16, h: 24},
+                    wb0_i0: {x: 178, y:  67, w:  1, h:  2},
+                    wb0_i1: {x: 177, y:  66, w:  1, h:  4},
+                    wb0_i2: {x: 176, y:  64, w:  1, h:  8},
+                    wb0_i3: {x: 128, y: 173, w: 16, h: 14},
+                    wb0_i4: {x: 144, y: 173, w: 16, h: 14},
+                    wb0_i5: {x: 160, y: 173, w: 16, h: 14},
+                    wb0_i6: {x: 176, y: 173, w: 16, h: 14},
+                    // magitek beam: outer
+                    wb0_o0: {x:   0, y: 168, w: 16, h: 24},
+                    wb0_o1: {x:  16, y: 168, w: 16, h: 24},
+                    wb0_o2: {x:  32, y: 168, w: 16, h: 24},
+                    wb0_o3: {x:  48, y: 168, w: 16, h: 24},
+                    wb0_o4: {x:  64, y: 168, w: 16, h: 24},
+                    wb0_o5: {x:  80, y: 168, w: 16, h: 24},
+                    wb0_o6: {x:  96, y: 168, w: 16, h: 24},
+                    wb0_o7: {x: 112, y: 168, w: 16, h: 24},
                     // magitek beam: burst
-                    mb_b_0:     {x: 128, y:  96, w:  32, h: 32},
-                    mb_b_1:     {x: 160, y:  96, w:  32, h: 32},
-                    mb_b_2:     {x: 128, y:  80, w:  16, h: 16},
-                    mb_b_3:     {x: 144, y:  80, w:  16, h: 16},
-                    mb_b_4:     {x: 160, y:  80, w:  16, h: 16},
-                    // damage pop
-                    pop_0:      {x: 128, y: 160, w:  16, h: 16},
-                    pop_1:      {x: 144, y: 160, w:  16, h: 16},
-                    pop_2:      {x: 128, y: 128, w:  32, h: 32},
-                    pop_3:      {x: 160, y: 128, w:  32, h: 32},
+                    wb0_b0: {x: 128, y: 192, w: 32, h: 32},
+                    wb0_b1: {x: 160, y: 192, w: 32, h: 32},
+                    wb0_b2: {x: 128, y: 224, w: 16, h: 16},
+                    wb0_b3: {x: 144, y: 224, w: 16, h: 16},
+                    wb0_b4: {x: 160, y: 224, w: 16, h: 16},
                     // magitek laser: laser
-                    ml_l_0:     {x: 160, y: 167, w:   8, h:  3},
-                    ml_l_1:     {x: 176, y: 167, w:   8, h:  3},
-                    ml_l_2:     {x: 168, y: 167, w:   8, h:  3},
+                    wb1_i0: {x: 128, y: 247, w:  6, h:  3},
+                    wb1_i1: {x: 134, y: 247, w:  1, h:  3},
+                    wb1_i2: {x: 135, y: 247, w:  6, h:  3},
                     // magitek laser: burst
-                    ml_b_0:     {x: 144, y: 176, w:  16, h: 16},
-                    ml_b_1:     {x: 160, y: 176, w:  16, h: 16},
-                    ml_b_2:     {x: 176, y: 176, w:  16, h: 16},
-                    ml_b_3:     {x: 128, y: 192, w:  16, h: 16},
-                    ml_b_4:     {x: 160, y: 192, w:  16, h: 16}
+                    wb1_b0: {x: 144, y: 240, w:  16, h: 16},
+                    wb1_b1: {x: 160, y: 240, w:  16, h: 16},
+                    wb1_b2: {x: 176, y: 240, w:  16, h: 16},
+                    wb1_b3: {x: 128, y: 256, w:  32, h: 32},
+                    wb1_b4: {x: 160, y: 256, w:  32, h: 32}
                 },
                 init: function() {
                     if (db.val) {
