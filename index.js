@@ -1085,25 +1085,31 @@
                 units.rdy.shift();
                 units.rdy.push(hero);
                 hero.actFn = undefined;
-                heroOptDlg._val = 0;
+                heroOptDlg._opt = 0;
                 heroOptDlg._tgt = undefined;
                 return;
             }
             if (io.ok) {
                 heroOptDlg._tgt = 0;
             } else if (io.up) {
-                heroOptDlg._val = (heroOptDlg._val - 1 + heroOptDlg._lst.length) % heroOptDlg._lst.length;
+                heroOptDlg._opt = (heroOptDlg._opt - 1 + heroOptDlg._lst.length) % heroOptDlg._lst.length;
             } else if (io.down) {
-                heroOptDlg._val = (heroOptDlg._val + 1) % heroOptDlg._lst.length;
+                heroOptDlg._opt = (heroOptDlg._opt + 1) % heroOptDlg._lst.length;
             }
         } else {
             if (io.ok) {
-                units.actRst(hero, dt);
-                heroOptDlg._val = 0;
-                heroOptDlg._tgt = undefined;
+                var opt = heroOptDlg._lst[heroOptDlg._opt];
+                if (0 === opt.acts.length) {
+                    units.actRst(hero, dt);
+                    heroOptDlg._opt = 0;
+                    heroOptDlg._tgt = undefined;
+                } else {
+                    var act = opt.acts[(prng() * opt.acts.length) | 0];
+                    act(hero, opt.tgts[heroOptDlg._tgt]);
+                }
                 return;
             }
-            var len = heroOptDlg._lst[heroOptDlg._val].tgts.length;
+            var len = heroOptDlg._lst[heroOptDlg._opt].tgts.length;
             if (io.back) {
                 heroOptDlg._tgt = undefined;
             } else if (io.up) {
@@ -1116,7 +1122,7 @@
         var sheet = sprite.sheet.hud;
         var txt = '';
         for (var i = 0; i < heroOptDlg._lst.length; i++) {
-            if (heroOptDlg._val === i) {
+            if (heroOptDlg._opt === i) {
                 txt += '\x00ty';
             } else {
                 txt += '\x00tw';
@@ -1130,9 +1136,9 @@
         cx.drawImage(sheet.img, sel.x, sel.y, sel.w, sel.h, hero.x[0] + (hero.tile.w >> 1) - (sel.w >> 1), hero.y[0] - sel.h, sel.w, sel.h);
         if (undefined === heroOptDlg._tgt) {
             var cur = sheet.tile.icon_curR;
-            cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOptDlg._x, heroOptDlg._y + 4 + 16 * heroOptDlg._val, cur.w, cur.h);
+            cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOptDlg._x, heroOptDlg._y + 4 + 16 * heroOptDlg._opt, cur.w, cur.h);
         } else {
-            var tgt = heroOptDlg._lst[heroOptDlg._val].tgts[heroOptDlg._tgt];
+            var tgt = heroOptDlg._lst[heroOptDlg._opt].tgts[heroOptDlg._tgt];
             if ('en' === tgt.type) {
                 var cur = sheet.tile.icon_curL;
                 cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] + tgt.tile.w, tgt.y[0] + tgt.tile.h - cur.h, cur.w, cur.h);
@@ -1149,7 +1155,7 @@
         heroOptDlg._w = w;
         heroOptDlg._h = h;
         heroOptDlg._lst = lst;
-        heroOptDlg._val = 0;
+        heroOptDlg._opt = 0;
         heroOptDlg._tgt = undefined;
     }
 
@@ -1190,9 +1196,9 @@
         hero3.rst(scn.fb2, 279, 7, 138, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         var opts = [
-            {name: 'Attack', tgts: [enemy1]},
-            {name: 'Special', tgts: [enemy1]},
-            {name: 'Heal', tgts: [hero1, hero2, hero3]}
+            {name: 'Attack', tgts: [enemy1], acts: []},
+            {name: 'Special', tgts: [enemy1], acts: []},
+            {name: 'Heal', tgts: [hero1, hero2, hero3], acts: []}
         ];
         heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56, opts);
         q.add(enemyDlg, 0, 0);
