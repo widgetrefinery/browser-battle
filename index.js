@@ -264,7 +264,7 @@
                     cx.putImageData(buf, 0, 72);
                     // red tint
                     buf = cx.getImageData(0, 24, 128, 48);
-                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0xf8, 0x90, 0x0]]);
+                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0xf8, 0x40, 0x0]]);
                     cx.putImageData(buf, 0, 120);
                     // yellow tint
                     buf = cx.getImageData(0, 32, 128, 40);
@@ -887,7 +887,17 @@
     var heroes = {
         upd: function(hero, dt) {
             units.act(hero, dt);
+            if (hero.mhp * 0.25 <= hero.chp) {
+                hero.tile = hero.anim.a[0];
+            } else if (0 < hero.chp) {
+                hero.tile = hero.anim.l;
+            } else {
+                hero.tile = hero.anim.p;
+            }
             units.mov(hero, dt);
+            if (dt > hero.movDt) {
+                hero.tile = hero.anim.a[((sprite.anim * (dt - hero.movDt)) | 0) % hero.anim.a.length];
+            }
             if (0 === hero.st && hero === units.rdy[0]) {
                 hero.st = 1;
             } else if (1 === hero.st) {
@@ -909,18 +919,15 @@
 //                    units.rdy.shift();
 //                }
             }
-            var tile;
-            if (hero.x[1] !== hero.x[2] || hero.y[1] !== hero.y[2]) {
-                tile = hero.aa[((dt * sprite.anim) | 0) % hero.aa.length];
-            } else {
-                tile = hero.aa[0];
-            }
+            var tile = hero.tile;
             hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
         },
-        rst: function(hero, fb, x, dx, y, actDt, name) {
+        rst: function(hero, fb, x, dx, y, actDt, name, anim) {
             units.rst(hero, fb, x, y, 0.08, ((prng() * 4) | 0) / 100 + 0.06, actDt, (prng() * 400 + 1200) | 0);
             units.movRst(hero, 0, fb.cv.width + 16 + dx, x, y, y);
+            hero.chp = hero.mhp >> 1;
             hero.nam = name;
+            hero.anim = anim;
         }
     };
 
@@ -928,27 +935,42 @@
         heroes.upd(hero1, dt);
     }
     hero1.rst = function(fb, x, dx, y, actDt) {
-        heroes.rst(hero1, fb, x, dx, y, actDt, 'Celes');
         var tiles = sprite.sheet.btl1.tile;
-        hero1.aa = [tiles.h0_a1, tiles.h0_a2, tiles.h0_a1, tiles.h0_a0];
+        heroes.rst(hero1, fb, x, dx, y, actDt, 'Celes', {
+            a: [tiles.h0_a1, tiles.h0_a2, tiles.h0_a1, tiles.h0_a0],
+            h: [tiles.h0_h0, tiles.h0_h1],
+            l: tiles.h0_l,
+            p: tiles.h0_p,
+            v: tiles.h0_v
+        });
     };
 
     function hero2(dt) {
         heroes.upd(hero2, dt);
     }
     hero2.rst = function(fb, x, dx, y, actDt) {
-        heroes.rst(hero2, fb, x, dx, y, actDt, 'Locke');
         var tiles = sprite.sheet.btl1.tile;
-        hero2.aa = [tiles.h1_a1, tiles.h1_a2, tiles.h1_a1, tiles.h1_a0];
+        heroes.rst(hero2, fb, x, dx, y, actDt, 'Locke', {
+            a: [tiles.h1_a1, tiles.h1_a2, tiles.h1_a1, tiles.h1_a0],
+            h: [tiles.h1_h0, tiles.h1_h1],
+            l: tiles.h1_l,
+            p: tiles.h1_p,
+            v: tiles.h1_v
+        });
     };
 
     function hero3(dt) {
         heroes.upd(hero3, dt);
     }
     hero3.rst = function(fb, x, dx, y, actDt) {
-        heroes.rst(hero3, fb, x, dx, y, actDt, 'Mog');
         var tiles = sprite.sheet.btl1.tile;
-        hero3.aa = [tiles.h2_a1, tiles.h2_a2, tiles.h2_a1, tiles.h2_a0];
+        heroes.rst(hero3, fb, x, dx, y, actDt, 'Mog', {
+            a: [tiles.h2_a1, tiles.h2_a2, tiles.h2_a1, tiles.h2_a0],
+            h: [tiles.h2_h0, tiles.h2_h1],
+            l: tiles.h2_l,
+            p: tiles.h2_p,
+            v: tiles.h2_v
+        });
     };
 
     function healAct(src, tgt) {
@@ -1004,19 +1026,22 @@
     function heroDlg() {
         var txt0 = '', txt1 = '';
         for (var i = 0; i < heroDlg._lst.length; i++) {
-            if (0 < heroDlg._lst[i].st) {
+            var hero = heroDlg._lst[i];
+            if (0 < hero.st) {
                 txt0 += '\x00ty';
             } else {
                 txt0 += '\x00tw';
             }
-            txt0 += heroDlg._lst[i].nam + '\n\n';
-            if (heroDlg._lst[i].chp === heroDlg._lst[i].mhp) {
+            txt0 += hero.nam + '\n\n';
+            if (hero.mhp === hero.chp) {
                 txt1 += '\x00tg';
-            } else {
+            } else if (hero.mhp * 0.25 <= hero.chp) {
                 txt1 += '\x00tw';
+            } else {
+                txt1 += '\x00tr';
             }
-            txt1 += heroDlg._lst[i].chp + '\x00tw/' + heroDlg._lst[i].mhp;
-            var t = (heroDlg._lst[i].act * 0.24) | 0;
+            txt1 += hero.chp + '\x00tw/' + hero.mhp;
+            var t = (hero.act * 0.24) | 0;
             if (24 <= t) {
                 txt1 += '\x00byl888r';
             } else {
