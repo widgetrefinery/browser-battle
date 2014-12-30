@@ -475,11 +475,22 @@
                     pf6:    {x:   0, y: 288, w: 32, h: 32},
                     pf7:    {x:  32, y: 288, w: 32, h: 32}
                 },
+                anim: {},
                 init: function() {
+                    var sheet = sprite.sheet.btl1;
+                    sheet.anim.h0_a = [sheet.tile.h0_a1, sheet.tile.h0_a2, sheet.tile.h0_a1, sheet.tile.h0_a0];
+                    sheet.anim.h0_h = [sheet.tile.h0_h0, sheet.tile.h0_h1];
+                    sheet.anim.h1_a = [sheet.tile.h1_a1, sheet.tile.h1_a2, sheet.tile.h1_a1, sheet.tile.h1_a0];
+                    sheet.anim.h1_h = [sheet.tile.h1_h0, sheet.tile.h1_h1];
+                    sheet.anim.h2_a = [sheet.tile.h2_a1, sheet.tile.h2_a2, sheet.tile.h2_a1, sheet.tile.h2_a0];
+                    sheet.anim.h2_h = [sheet.tile.h2_h0, sheet.tile.h2_h1];
+                    sheet.anim.ih_g = [sheet.tile.ih_g0, sheet.tile.ih_g1, sheet.tile.ih_g2, sheet.tile.ih_g3];
+                    sheet.anim.ih_p = [sheet.tile.ih_p0, sheet.tile.ih_p1, sheet.tile.ih_p2, sheet.tile.ih_p3];
+                    sheet.anim.ih_r = [sheet.tile.ih_r0, sheet.tile.ih_r1, sheet.tile.ih_r2, sheet.tile.ih_r3];
                     if (db.val) {
-                        var dcv = db.cv(sprite.sheet.btl1.img.width, sprite.sheet.btl1.img.height);
+                        var dcv = db.cv(sheet.img.width, sheet.img.height);
                         if (dcv) {
-                            dcv.getContext('2d').drawImage(sprite.sheet.btl1.img, 0, 0);
+                            dcv.getContext('2d').drawImage(sheet.img, 0, 0);
                         }
                     }
                     pending--;
@@ -828,6 +839,7 @@
                 unit.actDt = dt;
                 unit.actFn = undefined;
                 units.rdy.shift();
+                heroOptDlg.rst2();
             }
         },
         mov: function(unit, dt) {
@@ -936,13 +948,13 @@
         heroes.upd(hero1, dt);
     }
     hero1.rst = function(fb, x, dx, y, actDt) {
-        var tiles = sprite.sheet.btl1.tile;
+        var sheet = sprite.sheet.btl1;
         heroes.rst(hero1, fb, x, dx, y, actDt, 'Locke', {
-            a: [tiles.h0_a1, tiles.h0_a2, tiles.h0_a1, tiles.h0_a0],
-            h: [tiles.h0_h0, tiles.h0_h1],
-            l: tiles.h0_l,
-            p: tiles.h0_p,
-            v: tiles.h0_v
+            a: sheet.anim.h0_a,
+            h: sheet.anim.h0_h,
+            l: sheet.tile.h0_l,
+            p: sheet.tile.h0_p,
+            v: sheet.tile.h0_v
         });
     };
 
@@ -950,13 +962,13 @@
         heroes.upd(hero2, dt);
     }
     hero2.rst = function(fb, x, dx, y, actDt) {
-        var tiles = sprite.sheet.btl1.tile;
+        var sheet = sprite.sheet.btl1;
         heroes.rst(hero2, fb, x, dx, y, actDt, 'Celes', {
-            a: [tiles.h1_a1, tiles.h1_a2, tiles.h1_a1, tiles.h1_a0],
-            h: [tiles.h1_h0, tiles.h1_h1],
-            l: tiles.h1_l,
-            p: tiles.h1_p,
-            v: tiles.h1_v
+            a: sheet.anim.h1_a,
+            h: sheet.anim.h1_h,
+            l: sheet.tile.h1_l,
+            p: sheet.tile.h1_p,
+            v: sheet.tile.h1_v
         });
     };
 
@@ -964,44 +976,43 @@
         heroes.upd(hero3, dt);
     }
     hero3.rst = function(fb, x, dx, y, actDt) {
-        var tiles = sprite.sheet.btl1.tile;
+        var sheet = sprite.sheet.btl1;
         heroes.rst(hero3, fb, x, dx, y, actDt, 'Mog', {
-            a: [tiles.h2_a1, tiles.h2_a2, tiles.h2_a1, tiles.h2_a0],
-            h: [tiles.h2_h0, tiles.h2_h1],
-            l: tiles.h2_l,
-            p: tiles.h2_p,
-            v: tiles.h2_v
+            a: sheet.anim.h2_a,
+            h: sheet.anim.h2_h,
+            l: sheet.tile.h2_l,
+            p: sheet.tile.h2_p,
+            v: sheet.tile.h2_v
         });
     };
 
-    function healAct(src, tgt) {
-        var fn = function(dt) {
-            if (dt >= fn._t1) {
-                if (src.x[2] !== src.x[3]) {
-                    units.movRst(src, fn._t1 - dt, src.x[3] - 24, src.x[3], src.y[3], src.y[3]);
-                }
-            } else if (dt >= fn._t0) {
-                var f0 = ((dt - fn._t0) * sprite.anim) | 0;
-                var t0 = fn._anim[f0];
-                tgt.fb.cx.drawImage(
-                    sprite.sheet.btl1.img,
-                    t0.x, t0.y, t0.w, t0.h,
-                    tgt.x[0] + 8 - (t0.w >> 1), tgt.y[0] + 12 - (t0.h >> 1), t0.w, t0.h
-                );
+    function healAct(src, tgt, dt) {
+        var anim = healAct._anim[(prng() * healAct._anim.length) | 0];
+        var len = (anim.length / sprite.anim) | 0;
+        var dt0 = units.movRst(src, 0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
+        var dt1 = dt0 + len;
+        var rdt = dt;
+
+        src.actFn = function(hero, dt) {
+            if (dt - rdt >= dt1) {
+                units.movRst(hero, 0, src.x[0], src.x[3], src.y[0], src.y[3]);
+                units.actRst(hero, dt);
+            } else if (dt - rdt >= dt0) {
+                hero.tile = hero.anim.v;
             }
         };
-        fn._anim = healAct._anim[(prng() * healAct._anim.length) | 0];
-        fn._t0 = units.movRst(src, 0, src.x[3], src.x[3] - 24, src.y[3], src.y[3]);
-        fn._t1 = fn._t0 + (fn._anim.length / sprite.anim) | 0;
-        var t2 = fn._t0 + fn._t1;
-        q.add(fn, 0, t2);
-        return t2;
+
+        var fn = function(dt) {
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            tgt.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                tile.x, tile.y, tile.w, tile.h,
+                tgt.x[0] + (tgt.tile.w >> 1) - (tile.w >> 1), tgt.y[0] + (tgt.tile.h >> 1) - (tile.h >> 1), tile.w, tile.h
+            );
+        };
+        q.add(fn, dt0, len);
     }
-    healAct._anim = [
-        [sprite.sheet.btl1.tile.ih_g0, sprite.sheet.btl1.tile.ih_g1, sprite.sheet.btl1.tile.ih_g2, sprite.sheet.btl1.tile.ih_g3],
-        [sprite.sheet.btl1.tile.ih_p0, sprite.sheet.btl1.tile.ih_p1, sprite.sheet.btl1.tile.ih_p2, sprite.sheet.btl1.tile.ih_p3],
-        [sprite.sheet.btl1.tile.ih_r0, sprite.sheet.btl1.tile.ih_r1, sprite.sheet.btl1.tile.ih_r2, sprite.sheet.btl1.tile.ih_r3],
-    ];
+    healAct._anim = [sprite.sheet.btl1.anim.ih_g, sprite.sheet.btl1.anim.ih_p, sprite.sheet.btl1.anim.ih_r];
 
     function enemyDlg() {
         var txt = enemyDlg._val.nam + '\n\n';
@@ -1105,7 +1116,7 @@
                     heroOptDlg._tgt = undefined;
                 } else {
                     var act = opt.acts[(prng() * opt.acts.length) | 0];
-                    act(hero, opt.tgts[heroOptDlg._tgt]);
+                    act(hero, opt.tgts[heroOptDlg._tgt], dt);
                 }
                 return;
             }
@@ -1155,9 +1166,12 @@
         heroOptDlg._w = w;
         heroOptDlg._h = h;
         heroOptDlg._lst = lst;
+        heroOptDlg.rst2();
+    }
+    heroOptDlg.rst2 = function() {
         heroOptDlg._opt = 0;
         heroOptDlg._tgt = undefined;
-    }
+    };
 
     function msgDlg(dt) {
         var cx = msgDlg._fb.cx;
@@ -1198,7 +1212,7 @@
         var opts = [
             {name: 'Attack', tgts: [enemy1], acts: []},
             {name: 'Special', tgts: [enemy1], acts: []},
-            {name: 'Heal', tgts: [hero1, hero2, hero3], acts: []}
+            {name: 'Heal', tgts: [hero1, hero2, hero3], acts: [healAct]}
         ];
         heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56, opts);
         q.add(enemyDlg, 0, 0);
