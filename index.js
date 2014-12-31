@@ -261,7 +261,7 @@
                     cx.putImageData(buf, 120, 24);
                     // green tint
                     buf = cx.getImageData(0, 24, 128, 48);
-                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0x0, 0xd8, 0x0]]);
+                    sprite._utl.pal(buf, [[0x0, 0x0, 0x0, 0x0, 0x0, 0x80], [0xf8, 0xf8, 0xf8, 0x0, 0xd8, 0x0], [0xf0, 0xf8, 0xf8, 0xb0, 0xf8, 0x90]]);
                     cx.putImageData(buf, 0, 72);
                     // red tint
                     buf = cx.getImageData(0, 24, 128, 48);
@@ -527,12 +527,13 @@
 
     function q() {
         for (var i in q._lst) {
-            var dt = tick.ts - q._lst[i].q.ts;
+            var fn = q._lst[i];
+            var dt = tick.ts - fn.q.ts;
             if (0 > dt) {
                 continue;
             }
-            q._lst[i](dt);
-            if (0 < q._lst[i].q.td && dt > q._lst[i].q.td) {
+            fn(dt);
+            if (0 < fn.q.td && dt > fn.q.td) {
                 delete q._lst[i];
                 q.size--;
             }
@@ -875,6 +876,48 @@
             var dy = Math.abs(y1 - y0) / unit.movSpd;
             return Math.max(dx, dy) | 0;
         },
+        chgHp: function(unit, amt, ts) {
+            var fn0 = function() {
+                unit.chp += amt;
+                if (0 > unit.chp) {
+                    unit.chp = 0;
+                } else if (unit.chp > unit.mhp) {
+                    unit.chp = unit.mhp;
+                }
+                q.del(fn0);
+            };
+            q.add(fn0, ts, 0);
+
+            var amtTxt;
+            if (0 < amt) {
+                amtTxt = '\x00dg' + amt;
+            } else if (0 > amt) {
+                amtTxt = '\x00dw' + amt;
+            } else {
+                amtTxt = '\x00dwm';
+            }
+            var y0 = (unit.tile.w >> 1) - 12;
+            var fn1 = function(dt) {
+                var dy = 0;
+                if (300 > dt) {
+                    dy = 4 * 8 * dt * dt / 300 / 300 - 4 * 8 * dt / 300;
+                } else {
+                    dt -= 300;
+                    dy = 4 * 4 * dt * dt / 300 / 300 - 4 * 4 * dt / 300;
+                }
+                if (0 < dy) {
+                    dy = 0;
+                }
+                if (unit.x[0] < (unit.fb.cv.width >> 1)) {
+                    sprite.txtL(unit.fb.cx, unit.x[0] + unit.tile.w, unit.y[0] + y0 + dy, sprite.sheet.hud, amtTxt);
+                } else {
+                    sprite.txtR(unit.fb.cx, unit.x[0], unit.y[0] + y0 + dy, sprite.sheet.hud, amtTxt);
+                }
+            };
+            q.add(fn1, ts, 800);
+
+            return 800;
+        },
         rst: function(unit, fb, x, y, movSpd, actSpd, actDt, hp, type, tile) {
             unit.fb = fb;
             unit.x = [x, x, x, x];
@@ -989,15 +1032,17 @@
     function healAct(src, tgt, dt) {
         var anim = healAct._anim[(prng() * healAct._anim.length) | 0];
         var len = (anim.length / sprite.anim) | 0;
-        var dt0 = units.movRst(src, 0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
+        var dt0 = 1000 + units.movRst(src, 1000, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
         var dt1 = dt0 + len;
+        var dt2 = dt1 + units.chgHp(tgt, tgt.mhp >> 4, dt1);
         var rdt = dt;
 
         src.actFn = function(hero, dt) {
-            if (dt - rdt >= dt1) {
+            dt -= rdt;
+            if (dt >= dt2) {
                 units.movRst(hero, 0, src.x[0], src.x[3], src.y[0], src.y[3]);
                 units.actRst(hero, dt);
-            } else if (dt - rdt >= dt0) {
+            } else if (dt >= dt0) {
                 hero.tile = hero.anim.v;
             }
         };
@@ -1011,6 +1056,8 @@
             );
         };
         q.add(fn, dt0, len);
+
+        msgDlg.show('Cure', 0, 2000);
     }
     healAct._anim = [sprite.sheet.btl1.anim.ih_g, sprite.sheet.btl1.anim.ih_p, sprite.sheet.btl1.anim.ih_r];
 
