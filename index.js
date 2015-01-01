@@ -959,6 +959,12 @@
 
             return 800;
         },
+        hurt: function(unit, dt) {
+            var dx = ((sprite.anim * dt) | 0) % units.hurtLst.length;
+            dx = units.hurtLst[dx];
+            units.movInst(unit, unit.x[3] + dx, unit.y[3]);
+        },
+        hurtLst: [-1, 1],
         rst: function(unit, fb, x, y, movSpd, actSpd, actDt, hp, type, tile) {
             unit.fb = fb;
             unit.x = [x, x, x, x];
@@ -1182,8 +1188,10 @@
             if (mydt >= dt3) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
             } else if (mydt >= dt1) {
                 unit.tile = unit.anim.a[1];
+                units.hurt(tgt, mydt - dt1);
             }
         };
 
@@ -1216,8 +1224,10 @@
             if (mydt >= dt3) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
             } else if (mydt >= dt1) {
                 unit.tile = unit.anim.a[1];
+                units.hurt(tgt, mydt - dt1);
             }
         };
 
@@ -1267,6 +1277,7 @@
             if (mydt >= dt7) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
             } else if (mydt >= dt1) {
                 var pos = meleeAct.interp(src, tgt, mydt, confs, true);
                 units.movInst(src, pos[0], pos[1]);
@@ -1293,6 +1304,7 @@
                     );
                     src.fb.cx.restore();
                 }
+                units.hurt(tgt, mydt - dt1);
             }
         };
     };
