@@ -41,6 +41,7 @@
         optSpecial: 'Special',
         optHeal: 'Heal',
         swordAttack: 'Flame Sabre',
+        mahouAttack: 'Flare',
         cure: 'Cure',
         revive: 'Revive'
     };
@@ -504,6 +505,7 @@
                     sheet.anim.ih_g = [sheet.tile.ih_g0, sheet.tile.ih_g1, sheet.tile.ih_g2, sheet.tile.ih_g3];
                     sheet.anim.ih_p = [sheet.tile.ih_p0, sheet.tile.ih_p1, sheet.tile.ih_p2, sheet.tile.ih_p3];
                     sheet.anim.ih_r = [sheet.tile.ih_r0, sheet.tile.ih_r1, sheet.tile.ih_r2, sheet.tile.ih_r3];
+                    sheet.anim.pf = [sheet.tile.pf0, sheet.tile.pf1, sheet.tile.pf2, sheet.tile.pf3, sheet.tile.pf4, sheet.tile.pf5, sheet.tile.pf6, sheet.tile.pf7];
                     if (db.val) {
                         var dcv = db.cv(sheet.img.width, sheet.img.height);
                         if (dcv) {
@@ -722,8 +724,14 @@
         switch(dc._st) {
             case 1:
                 var fps = (1000 / tick.dt) | 0;
-                sprite.dlg(cx, 0, 0, 64, 32, sprite.sheet.hud);
-                sprite.txtL(cx, 8, 8, sprite.sheet.hud, 'Pg1\nfps:' + fps);
+                sprite.dlg(cx, 0, 0, 120, 48, sprite.sheet.hud);
+                sprite.txtL(
+                    cx, 8, 8, sprite.sheet.hud,
+                    'Pg1'
+                    + '\nfps:' + fps
+                    + '\nen0.chp:' + enemy1.chp
+                    + '\nen0.act:' + enemy1.act
+                );
                 break;
             case 2:
                 if (io.kb.up === io.raw) {
@@ -1053,7 +1061,7 @@
         });
     };
     hero2.opts = [
-        {name: lang.optAttack, tgts: [enemy1], acts: []},
+        {name: lang.optAttack, tgts: [enemy1], acts: [mahouAct]},
         {name: lang.optSpecial, tgts: [enemy1], acts: []},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
@@ -1143,7 +1151,11 @@
             dx = (dx - 8) | 0;
             var dy = ay * dt * dt * dt * dt + cy * dt * dt + ey;
             dy = (dy - 16) | 0;
-            tgt.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, tgt.x[0] + dx, tgt.y[0] + dy, tile.w, tile.h);
+            tgt.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                tile.x, tile.y, tile.w, tile.h,
+                tgt.x[0] + dx, tgt.y[0] + dy, tile.w, tile.h
+            );
         };
         q.add(fn, dt1, len);
     };
@@ -1173,18 +1185,48 @@
             var tile = anim0[((sprite.anim * dt) | 0) % anim0.length];
             src.fb.cx.drawImage(
                 sprite.sheet.btl1.img,
-                tile.x,
-                tile.y,
-                tile.w,
-                tile.h,
+                tile.x, tile.y, tile.w, tile.h,
                 src.x[0] - tile.w,
                 src.y[0] + src.tile.h - tile.h,
-                tile.w,
-                tile.h
+                tile.w, tile.h
             );
         };
         q.add(fn0, dt1, len0);
     }
+
+    function mahouAct(src, tgt, dt) {
+        var anim0 = sprite.sheet.btl1.anim.ws_w;
+        var len0 = anim0.length / sprite.anim;
+        var dt0 = 1000;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], (src.x[3] - src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
+        var dt2 = dt1 + len0;
+        var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pf, dt2);
+        var rdt = dt;
+        units.chgHp(tgt, -200 - prng(200), dt2);
+        msgDlg.show(lang.mahouAttack, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt3) {
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.actRst(unit, dt);
+            } else if (mydt >= dt1) {
+                unit.tile = unit.anim.a[1];
+            }
+        };
+
+        var fn0 = function(dt) {
+            var tile = anim0[((sprite.anim * dt) | 0) % anim0.length];
+            src.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                tile.x, tile.y, tile.w, tile.h,
+                src.x[0] - tile.w,
+                src.y[0] + src.tile.h - tile.h,
+                tile.w, tile.h
+            );
+        };
+        q.add(fn0, dt1, len0);
+    };
 
     function pyroAnim(unit, sheet, anim, ts) {
         var len = anim.length / sprite.anim;
@@ -1229,21 +1271,7 @@
     }
 
     function enemyDlg() {
-        var txt = enemyDlg._val.nam + '\n\n';
-        var t = (enemyDlg._val.act * 0.24) | 0;
-        if (24 <= t) {
-            txt += '\x00byl888r';
-        } else {
-            txt += '\x00bwl';
-            if (16 <= t) {
-                txt += '88' + (t - 16);
-            } else if (8 <= t) {
-                txt += '8' + (t - 8) + '0';
-            } else {
-                txt += t + '00';
-            }
-            txt += 'r';
-        }
+        var txt = enemyDlg._val.nam;
         sprite.dlg(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
         sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, txt);
     }
@@ -1422,7 +1450,7 @@
         hero2.rst(scn.fb2, 240, 0, 108, 900);
         hero3.rst(scn.fb2, 247, 7, 138, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
-        heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56);
+        heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56);
         q.add(enemyDlg, 0, 0);
         q.add(heroDlg, 0, 0);
         q.add(enemy1, 1000, 0);
