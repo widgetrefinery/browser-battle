@@ -1095,11 +1095,11 @@
         msgDlg.show(lang.cure, 0, 2000);
 
         src.actFn = function(unit, dt) {
-            var dt2 = dt - rdt;
-            if (dt2 >= dt2) {
+            var mydt = dt - rdt;
+            if (mydt >= dt2) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
-            } else if (dt2 >= dt0) {
+            } else if (mydt >= dt0) {
                 unit.tile = unit.anim.v;
             }
         };
@@ -1125,11 +1125,11 @@
         msgDlg.show(lang.revive, 0, 2000);
 
         src.actFn = function(hero, dt) {
-            var dt2 = dt - rdt;
-            if (dt2 >= dt2) {
+            var mydt = dt - rdt;
+            if (mydt >= dt2) {
                 units.movRst(hero, 0, src.x[0], src.x[3], src.y[0], src.y[3]);
                 units.actRst(hero, dt);
-            } else if (dt2 >= dt0) {
+            } else if (mydt >= dt0) {
                 hero.tile = hero.anim.v;
             }
         };
@@ -1173,11 +1173,11 @@
         msgDlg.show(lang.swordAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
-            var dt2 = dt - rdt;
-            if (dt2 >= dt5) {
+            var mydt = dt - rdt;
+            if (mydt >= dt5) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
-            } else if (dt2 >= dt1) {
+            } else if (mydt >= dt1) {
                 unit.tile = unit.anim.a[1];
             }
         };
