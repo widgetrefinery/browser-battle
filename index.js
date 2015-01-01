@@ -1437,9 +1437,9 @@
         enemy1.rst(scn.fb2, 32, 48, 1900);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
         // y = ( 240(framebuffer height) - 48(bottom dialog) - 72(top padding) ) / 4(divisions) * X (hero position) + 72(top padding) - 24(hero height)
-        hero1.rst(scn.fb2, 265, -7, 78, 900);
-        hero2.rst(scn.fb2, 272, 0, 108, 900);
-        hero3.rst(scn.fb2, 279, 7, 138, 900);
+        hero1.rst(scn.fb2, 233, -7, 78, 900);
+        hero2.rst(scn.fb2, 240, 0, 108, 900);
+        hero3.rst(scn.fb2, 247, 7, 138, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56);
         q.add(enemyDlg, 0, 0);
