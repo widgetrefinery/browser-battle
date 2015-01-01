@@ -1087,11 +1087,11 @@
     healAct._anim = [sprite.sheet.btl1.anim.ih_g, sprite.sheet.btl1.anim.ih_p, sprite.sheet.btl1.anim.ih_r];
     healAct.cure = function(src, tgt, dt) {
         var anim = healAct._anim[prng(healAct._anim.length)];
-        var len = (anim.length / sprite.anim) | 0;
-        var dt0 = 1000 + units.movRst(src, 1000, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
-        var dt1 = dt0 + len;
-        var dt2 = dt1 + units.chgHp(tgt, (tgt.mhp / 5) | 0, dt1);
+        var dt0 = 1000;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
+        var dt2 = dt1 + pyroAnim(tgt, sprite.sheet.btl1, anim, dt1);
         var rdt = dt;
+        units.chgHp(tgt, (tgt.mhp / 5) | 0, (dt2 + dt1) >> 1);
         msgDlg.show(lang.cure, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1103,25 +1103,16 @@
                 unit.tile = unit.anim.v;
             }
         };
-
-        var fn = function(dt) {
-            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
-            tgt.fb.cx.drawImage(
-                sprite.sheet.btl1.img,
-                tile.x, tile.y, tile.w, tile.h,
-                tgt.x[0] + (tgt.tile.w >> 1) - (tile.w >> 1), tgt.y[0] + (tgt.tile.h >> 1) - (tile.h >> 1), tile.w, tile.h
-            );
-        };
-        q.add(fn, dt0, len);
     };
     healAct.revive = function(src, tgt, dt) {
         var anim = sprite.sheet.btl1.anim.ir;
         var len = (anim.length / sprite.anim + 8 / sprite.anim) | 0;
         var len2 = len >> 1;
-        var dt0 = 1000 + units.movRst(src, 1000, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
-        var dt1 = dt0 + len;
-        var dt2 = dt1 + units.chgHp(tgt, (tgt.mhp / 5) | 0, dt1);
+        var dt0 = 1000;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
+        var dt2 = dt1 + len;
         var rdt = dt;
+        units.chgHp(tgt, (tgt.mhp / 5) | 0, dt1 + len2);
         msgDlg.show(lang.revive, 0, 2000);
 
         src.actFn = function(hero, dt) {
@@ -1129,7 +1120,7 @@
             if (mydt >= dt2) {
                 units.movRst(hero, 0, src.x[0], src.x[3], src.y[0], src.y[3]);
                 units.actRst(hero, dt);
-            } else if (mydt >= dt0) {
+            } else if (mydt >= dt1) {
                 hero.tile = hero.anim.v;
             }
         };
@@ -1154,27 +1145,23 @@
             dy = (dy - 16) | 0;
             tgt.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, tgt.x[0] + dx, tgt.y[0] + dy, tile.w, tile.h);
         };
-        q.add(fn, dt0, len);
+        q.add(fn, dt1, len);
     };
 
     function swordAct(src, tgt, dt) {
         var anim0 = sprite.sheet.btl1.anim.ws_s;
-        var anim1 = sprite.sheet.btl1.anim.pm;
         var len0 = anim0.length / sprite.anim;
-        var len1 = anim1.length / sprite.anim;
         var dt0 = 1000;
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], tgt.x[3] + tgt.tile.w, src.y[3], tgt.y[3] + tgt.tile.h - src.tile.h);
         var dt2 = dt1 + len0;
-        var dt3 = dt2 + (len1 >> 1);
-        var dt4 = dt2 + len1;
-        var dt5 = dt2 + (len1 << 1);
+        var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pm, dt2);
         var rdt = dt;
         units.chgHp(tgt, -300 - prng(100), dt2);
         msgDlg.show(lang.swordAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
             var mydt = dt - rdt;
-            if (mydt >= dt5) {
+            if (mydt >= dt3) {
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
             } else if (mydt >= dt1) {
@@ -1197,54 +1184,48 @@
             );
         };
         q.add(fn0, dt1, len0);
+    }
+
+    function pyroAnim(unit, sheet, anim, ts) {
+        var len = anim.length / sprite.anim;
+
+        var fn0 = function(dt) {
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            unit.fb.cx.drawImage(
+                sheet.img,
+                tile.x, tile.y, tile.w, tile.h,
+                (unit.x[0] + unit.tile.w * 0.75 - (tile.w >> 1)) | 0,
+                (unit.y[0] + unit.tile.w * 0.4 - (tile.h >> 1)) | 0,
+                tile.w, tile.h
+            );
+        };
+        q.add(fn0, ts, len);
 
         var fn1 = function(dt) {
-            var tile = anim1[((sprite.anim * dt) | 0) % anim1.length];
-            tgt.fb.cx.drawImage(
-                sprite.sheet.btl1.img,
-                tile.x,
-                tile.y,
-                tile.w,
-                tile.h,
-                (tgt.x[0] + tgt.tile.w * 0.75 - (tile.w >> 1)) | 0,
-                (tgt.y[0] + tgt.tile.w * 0.4 - (tile.h >> 1)) | 0,
-                tile.w,
-                tile.h
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            unit.fb.cx.drawImage(
+                sheet.img,
+                tile.x, tile.y, tile.w, tile.h,
+                (unit.x[0] + unit.tile.w * 0.25 - (tile.w >> 1)) | 0,
+                (unit.y[0] + unit.tile.w * 0.5 - (tile.h >> 1)) | 0,
+                tile.w, tile.h
             );
         };
-        q.add(fn1, dt2, len1);
+        q.add(fn1, ts + (len >> 1), len);
 
         var fn2 = function(dt) {
-            var tile = anim1[((sprite.anim * dt) | 0) % anim1.length];
-            tgt.fb.cx.drawImage(
-                sprite.sheet.btl1.img,
-                tile.x,
-                tile.y,
-                tile.w,
-                tile.h,
-                (tgt.x[0] + tgt.tile.w * 0.25 - (tile.w >> 1)) | 0,
-                (tgt.y[0] + tgt.tile.w * 0.5 - (tile.h >> 1)) | 0,
-                tile.w,
-                tile.h
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            unit.fb.cx.drawImage(
+                sheet.img,
+                tile.x, tile.y, tile.w, tile.h,
+                (unit.x[0] + unit.tile.w * 0.6 - (tile.w >> 1)) | 0,
+                (unit.y[0] + unit.tile.w * 0.75 - (tile.h >> 1)) | 0,
+                tile.w, tile.h
             );
         };
-        q.add(fn2, dt3, len1);
+        q.add(fn2, ts + len, len);
 
-        var fn3 = function(dt) {
-            var tile = anim1[((sprite.anim * dt) | 0) % anim1.length];
-            tgt.fb.cx.drawImage(
-                sprite.sheet.btl1.img,
-                tile.x,
-                tile.y,
-                tile.w,
-                tile.h,
-                (tgt.x[0] + tgt.tile.w * 0.6 - (tile.w >> 1)) | 0,
-                (tgt.y[0] + tgt.tile.w * 0.75 - (tile.h >> 1)) | 0,
-                tile.w,
-                tile.h
-            );
-        };
-        q.add(fn3, dt4, len1);
+        return len << 1;
     }
 
     function enemyDlg() {
