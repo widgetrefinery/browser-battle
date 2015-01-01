@@ -42,6 +42,7 @@
         optHeal: 'Heal',
         swordAttack: 'Flame Sabre',
         mahouAttack: 'Flare',
+        meleeAttack: 'Kaio Ken',
         cure: 'Cure',
         revive: 'Revive'
     };
@@ -505,6 +506,7 @@
                     sheet.anim.ih_g = [sheet.tile.ih_g0, sheet.tile.ih_g1, sheet.tile.ih_g2, sheet.tile.ih_g3];
                     sheet.anim.ih_p = [sheet.tile.ih_p0, sheet.tile.ih_p1, sheet.tile.ih_p2, sheet.tile.ih_p3];
                     sheet.anim.ih_r = [sheet.tile.ih_r0, sheet.tile.ih_r1, sheet.tile.ih_r2, sheet.tile.ih_r3];
+                    sheet.anim.ps = [sheet.tile.ps0, sheet.tile.ps1, sheet.tile.ps2, sheet.tile.ps3, sheet.tile.ps4];
                     sheet.anim.pf = [sheet.tile.pf0, sheet.tile.pf1, sheet.tile.pf2, sheet.tile.pf3, sheet.tile.pf4, sheet.tile.pf5, sheet.tile.pf6, sheet.tile.pf7];
                     if (db.val) {
                         var dcv = db.cv(sheet.img.width, sheet.img.height);
@@ -909,6 +911,10 @@
             var dy = Math.abs(y1 - y0) / unit.movSpd;
             return Math.max(dx, dy) | 0;
         },
+        movInst: function(unit, x, y) {
+            unit.x[0] = unit.x[1] = unit.x[2] = x;
+            unit.y[0] = unit.y[1] = unit.y[2] = y;
+        },
         chgHp: function(unit, amt, ts) {
             var fn0 = function() {
                 unit.chp += amt;
@@ -1080,7 +1086,7 @@
         });
     };
     hero3.opts = [
-        {name: lang.optAttack, tgts: [enemy1], acts: []},
+        {name: lang.optAttack, tgts: [enemy1], acts: [meleeAct]},
         {name: lang.optSpecial, tgts: [enemy1], acts: []},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
@@ -1228,47 +1234,136 @@
         q.add(fn0, dt1, len0);
     };
 
+    function meleeAct(src, tgt, dt) {
+        var len = 500;
+        var dt0 = 1000;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], tgt.x[3] + tgt.tile.w, src.y[3], tgt.y[3] + tgt.tile.h);
+        var dt2 = dt1 + len;
+        var dt3 = dt2 + len;
+        var dt4 = dt3 + len;
+        var dt5 = dt4 + len;
+        var dt6 = dt5 + len;
+        var dt7 = (dt6 + 2 / sprite.anim) | 0;
+        var rdt = dt;
+        pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt1);
+        pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt3);
+        pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt5);
+        units.chgHp(tgt, -75 - prng(50), dt2);
+        units.chgHp(tgt, -75 - prng(50), dt3);
+        units.chgHp(tgt, -75 - prng(50), dt4);
+        units.chgHp(tgt, -75 - prng(50), dt5);
+        msgDlg.show(lang.meleeAttack, 0, 2000);
+
+        var confs = [
+            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h, td: dt1, abs: true},
+            {x: -3, y: -2, td: dt2, abs: false},
+            {x:  2, y:  2, td: dt3, abs: false},
+            {x: -2, y:  1, td: dt4, abs: false},
+            {x:  0, y: -3, td: dt5, abs: false},
+            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h, td: dt6, abs: true},
+        ];
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt7) {
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.actRst(unit, dt);
+            } else if (mydt >= dt1) {
+                var pos = meleeAct.interp(src, tgt, mydt, confs, true);
+                units.movInst(src, pos[0], pos[1]);
+                var tile = src.anim.a[0];
+                pos = meleeAct.interp(src, tgt, (mydt - 2 / sprite.anim) | 0, confs, false);
+                if (pos) {
+                    src.fb.cx.save();
+                    src.fb.cx.globalAlpha = 0.4;
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        pos[0], pos[1], tile.w, tile.h
+                    );
+                    src.fb.cx.restore();
+                }
+                pos = meleeAct.interp(src, tgt, (mydt - 1 / sprite.anim) | 0, confs, false);
+                if (pos) {
+                    src.fb.cx.save();
+                    src.fb.cx.globalAlpha = 0.6;
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        pos[0], pos[1], tile.w, tile.h
+                    );
+                    src.fb.cx.restore();
+                }
+            }
+        };
+    };
+    meleeAct.interp = function(src, tgt, dt, confs, retAlways) {
+        var i, conf0, conf1, x0, x1, y0, y1;
+        for (i = 1; i < confs.length; i++) {
+            conf0 = confs[i - 1];
+            conf1 = confs[i];
+            if (dt < conf1.td) {
+                if (dt  < conf0.td) {
+                    conf1 = conf0;
+                    break;
+                }
+                var off = (dt - conf0.td) / (conf1.td - conf0.td);
+                if (conf0.abs) {
+                    x0 = conf0.x;
+                    y0 = conf0.y;
+                } else {
+                    x0 = tgt.x[0] + (tgt.tile.w >> 1) + src.tile.w * conf0.x;
+                    y0 = tgt.y[0] + (tgt.tile.h >> 1) + src.tile.h * conf0.y;
+                }
+                if (conf1.abs) {
+                    x1 = conf1.x;
+                    y1 = conf1.y;
+                } else {
+                    x1 = tgt.x[0] + (tgt.tile.w >> 1) + src.tile.w * conf1.x;
+                    y1 = tgt.y[0] + (tgt.tile.h >> 1) + src.tile.h * conf1.y;
+                }
+                var dx = (off * (x1 - x0) + x0) | 0;
+                var dy = (off * (y1 - y0) + y0) | 0;
+                return [dx, dy];
+            }
+        }
+        if (!retAlways) {
+            return undefined;
+        }
+        if (conf1.abs) {
+            return [conf1.x, conf1.y];
+        }
+        return [
+            (tgt.x[0] + (tgt.tile.w >> 1) + src.tile.w * conf1.x) | 0,
+            (tgt.y[0] + (tgt.tile.h >> 1) + src.tile.h * conf1.y) | 0
+        ];
+    };
+
     function pyroAnim(unit, sheet, anim, ts) {
         var len = anim.length / sprite.anim;
-
-        var fn0 = function(dt) {
-            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
-            unit.fb.cx.drawImage(
-                sheet.img,
-                tile.x, tile.y, tile.w, tile.h,
-                (unit.x[0] + unit.tile.w * 0.75 - (tile.w >> 1)) | 0,
-                (unit.y[0] + unit.tile.w * 0.4 - (tile.h >> 1)) | 0,
-                tile.w, tile.h
-            );
-        };
-        q.add(fn0, ts, len);
-
-        var fn1 = function(dt) {
-            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
-            unit.fb.cx.drawImage(
-                sheet.img,
-                tile.x, tile.y, tile.w, tile.h,
-                (unit.x[0] + unit.tile.w * 0.25 - (tile.w >> 1)) | 0,
-                (unit.y[0] + unit.tile.w * 0.5 - (tile.h >> 1)) | 0,
-                tile.w, tile.h
-            );
-        };
-        q.add(fn1, ts + (len >> 1), len);
-
-        var fn2 = function(dt) {
-            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
-            unit.fb.cx.drawImage(
-                sheet.img,
-                tile.x, tile.y, tile.w, tile.h,
-                (unit.x[0] + unit.tile.w * 0.6 - (tile.w >> 1)) | 0,
-                (unit.y[0] + unit.tile.w * 0.75 - (tile.h >> 1)) | 0,
-                tile.w, tile.h
-            );
-        };
-        q.add(fn2, ts + len, len);
-
+        pyroAnim.one(unit, sheet, anim, ts, 0.75, 0.4);
+        pyroAnim.one(unit, sheet, anim, ts + (len >> 1), 0.25, 0.5);
+        pyroAnim.one(unit, sheet, anim, ts + len, 0.6, 0.75);
         return len << 1;
     }
+    pyroAnim.one = function(unit, sheet, anim, ts, dx, dy) {
+        var len = anim.length / sprite.anim;
+        var x, y;
+        var fn = function(dt) {
+            if (undefined === x) {
+                x = unit.x[0];
+                y = unit.y[0];
+            }
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            unit.fb.cx.drawImage(
+                sheet.img,
+                tile.x, tile.y, tile.w, tile.h,
+                (x + unit.tile.w * dx - (tile.w >> 1)) | 0,
+                (y + unit.tile.w * dy - (tile.h >> 1)) | 0,
+                tile.w, tile.h
+            );
+        };
+        q.add(fn, ts, len);
+    };
 
     function enemyDlg() {
         var txt = enemyDlg._val.nam;
