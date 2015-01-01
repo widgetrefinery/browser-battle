@@ -977,12 +977,20 @@
             return 800;
         },
         hurt: function(unit, dt) {
-            var dx = ((sprite.anim * dt) | 0) % units.hurtLst.length;
-            dx = units.hurtLst[dx];
-            units.movInst(unit, unit.x[3] + dx, unit.y[3]);
+            if (undefined === unit.anim) {
+                var dx = ((sprite.anim * dt) | 0) % units.hurtLst.length;
+                dx = units.hurtLst[dx];
+                units.movInst(unit, unit.x[3] + dx, unit.y[3]);
+            } else {
+                var f = (sprite.anim * dt) | 0;
+                if (f >= unit.anim.h.length) {
+                    f = unit.anim.h.length - 1;
+                }
+                unit.tile2 = unit.anim.h[f];
+            }
         },
         hurtLst: [-1, 1],
-        rst: function(unit, fb, x, y, movSpd, actSpd, actDt, hp, type, tile) {
+        rst: function(unit, fb, x, y, movSpd, actSpd, actDt, hp, str, type, tile) {
             unit.fb = fb;
             unit.x = [x, x, x, x];
             unit.y = [y, y, y, y];
@@ -993,8 +1001,10 @@
             unit.actDt = actDt;
             unit.actFn = undefined;
             unit.mhp = unit.chp = hp;
+            unit.str = str;
             unit.type = type;
             unit.tile = tile;
+            unit.tile2 = undefined;
         }
     };
 
@@ -1023,7 +1033,7 @@
         enemy1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, enemy1.x[0], enemy1.y[0], tile.w, tile.h);
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 48000, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 48000, 1, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
     };
@@ -1053,6 +1063,10 @@
                 }
             }
             var tile = hero.tile;
+            if (undefined !== hero.tile2) {
+                tile = hero.tile2;
+                hero.tile2 = undefined;
+            }
             if (hero.mirV) {
                 hero.fb.cx.save();
                 hero.fb.cx.translate(hero.x[0] + tile.w, 0);
@@ -1066,7 +1080,7 @@
         rst: function(hero, fb, x, dx, y, actDt, name, anim) {
             var actSpd = prng(4) / 100 + 0.06;
             var hp = prng(400) + 1200;
-            units.rst(hero, fb, x, y, 0.16, actSpd, actDt, hp, 'fr', anim.a[0]);
+            units.rst(hero, fb, x, y, 0.16, actSpd, actDt, hp, 4, 'fr', anim.a[0]);
             units.movRst(hero, 0, fb.cv.width + 16 + dx, x, y, y);
             hero.chp = hero.mhp >> 1;
             hero.nam = name;
@@ -1215,7 +1229,7 @@
         var dt2 = dt1 + len0;
         var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pm, dt2);
         var rdt = dt;
-        units.chgHp(tgt, -200 - prng(200), dt2);
+        units.chgHp(tgt, ((-60 - prng(60)) * src.str) | 0, dt2);
         msgDlg.show(lang.swordAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1251,7 +1265,7 @@
         var dt2 = dt1 + len0;
         var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pf, dt2);
         var rdt = dt;
-        units.chgHp(tgt, -300 - prng(100), dt2);
+        units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt2);
         msgDlg.show(lang.mahouAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1293,10 +1307,10 @@
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt1);
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt3);
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt5);
-        units.chgHp(tgt, -75 - prng(50), dt2);
-        units.chgHp(tgt, -75 - prng(50), dt3);
-        units.chgHp(tgt, -75 - prng(50), dt4);
-        units.chgHp(tgt, -75 - prng(50), dt5);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt2);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt3);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt4);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt5);
         msgDlg.show(lang.meleeAttack, 0, 2000);
 
         var confs = [
@@ -1390,13 +1404,12 @@
         var dx = tgt.x[3] < src.x[3] ? -24 : 24;
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx, src.y[3], src.y[3]);
         var dt2 = dt1 + missileAct.ret(tgt, dt1);
-        var oneLen = missileAct.one(src, tgt, dt2);
-        missileAct.one(src, tgt, dt2 + 2 / sprite.anim);
-        missileAct.one(src, tgt, dt2 + 4 / sprite.anim);
+        var oneLen = missileAct.one(src, tgt, dt2, ((-25 - prng(18)) * src.str) | 0);
+        missileAct.one(src, tgt, dt2 + 2 / sprite.anim, ((-25 - prng(18)) * src.str) | 0);
+        missileAct.one(src, tgt, dt2 + 4 / sprite.anim, ((-25 - prng(18)) * src.str) | 0);
         var dt3 = dt2 + oneLen[0];
         var dt4 = dt2 + oneLen[1] + 4 / sprite.anim;
         var rdt = dt;
-        units.chgHp(tgt, -300 - prng(100), dt3);
         msgDlg.show(lang.missileAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1433,7 +1446,7 @@
 
         return len;
     };
-    missileAct.one = function(src, tgt, dt) {
+    missileAct.one = function(src, tgt, dt, dmg) {
         var anim0 = sprite.sheet.btl1.anim.me;
         var anim1 = sprite.sheet.btl1.anim.pb;
         var len1 = anim1.length / sprite.anim;
@@ -1443,6 +1456,7 @@
         var dt3 = dt2 + len1; // pyrotechnics
         var flip = tgt.x[0] > src.x[0];
         var x0, y0, x1, y1, y2;
+        units.chgHp(tgt, dmg, dt + dt2);
 
         var fn = function(dt) {
             if (undefined === x0) {
