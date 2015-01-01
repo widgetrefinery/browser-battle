@@ -1260,12 +1260,12 @@
             cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOptDlg._x, heroOptDlg._y + 4 + 16 * heroOptDlg._opt, cur.w, cur.h);
         } else {
             var tgt = heroOptDlg._lst[heroOptDlg._opt].tgts[heroOptDlg._tgt];
-            if ('en' === tgt.type) {
+            if (tgt.x[0] < (tgt.fb.cv.width >> 1)) {
                 var cur = sheet.tile.icon_curL;
-                cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] + tgt.tile.w, tgt.y[0] + tgt.tile.h - cur.h, cur.w, cur.h);
+                cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] + tgt.tile.w, tgt.y[0] + (tgt.tile.h >> 1) - (cur.h >> 1), cur.w, cur.h);
             } else {
                 var cur = sheet.tile.icon_curR;
-                cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] - cur.w, tgt.y[0] + tgt.tile.h - cur.h, cur.w, cur.h);
+                cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] - cur.w, tgt.y[0] + (tgt.tile.h >> 1) - (cur.h >> 1), cur.w, cur.h);
             }
         }
     }
