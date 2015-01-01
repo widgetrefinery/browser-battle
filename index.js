@@ -832,7 +832,14 @@
     var units = {
         rdy: [],
         act: function(unit, dt) {
-            if (dt >= unit.actDt && 100 > unit.act) {
+            if (0 >= unit.chp) {
+                unit.act = 0;
+                unit.actDt = dt;
+                unit.actFn = undefined;
+                if (unit === units.rdy[0]) {
+                    units.rdy.shift();
+                }
+            } else if (dt >= unit.actDt && 100 > unit.act) {
                 unit.act = (unit.actSpd * (dt - unit.actDt)) | 0;
                 if (100 <= unit.act) {
                     unit.act = 100;
