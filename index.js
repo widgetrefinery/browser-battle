@@ -983,6 +983,7 @@
             if (dt > hero.movDt) {
                 hero.tile = hero.anim.a[((sprite.anim * (dt - hero.movDt)) | 0) % hero.anim.a.length];
             }
+            hero.mirV = hero.x[0] < hero.x[2];
             if (hero === units.rdy[0]) {
                 if (hero.actFn) {
                     hero.actFn(hero, dt);
@@ -992,11 +993,14 @@
                 }
             }
             var tile = hero.tile;
-            hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
-            if (1 === hero.st) {
-                var anim = sprite.sheet.hud.anim.sel;
-                tile = anim[((sprite.anim * dt) | 0) % anim.length];
-                hero.fb.cx.drawImage(sprite.sheet.hud.img, tile.x, tile.y, tile.w, tile.h, hero.x[0] + 8 - (tile.w >> 1), hero.y[0] - tile.h, tile.w, tile.h);
+            if (hero.mirV) {
+                hero.fb.cx.save();
+                hero.fb.cx.translate(hero.x[0] + tile.w, 0);
+                hero.fb.cx.scale(-1, 1);
+                hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, 0, hero.y[0], tile.w, tile.h);
+                hero.fb.cx.restore();
+            } else {
+                hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
             }
         },
         rst: function(hero, fb, x, dx, y, actDt, name, anim) {
@@ -1007,6 +1011,7 @@
             hero.chp = hero.mhp >> 1;
             hero.nam = name;
             hero.anim = anim;
+            hero.mirV = false;
         }
     };
 
