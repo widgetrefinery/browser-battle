@@ -44,6 +44,7 @@
         mahouAttack: 'Flare',
         meleeAttack: 'Kaio Ken',
         missileAttack: 'Cluster Missile',
+        laserBeamAttack: 'Magitek Laser',
         cure: 'Cure',
         revive: 'Revive'
     };
@@ -512,6 +513,7 @@
                     sheet.anim.ps = [sheet.tile.ps0, sheet.tile.ps1, sheet.tile.ps2, sheet.tile.ps3, sheet.tile.ps4];
                     sheet.anim.pb = [sheet.tile.pb0, sheet.tile.pb1, sheet.tile.pb2, sheet.tile.pb3];
                     sheet.anim.pf = [sheet.tile.pf0, sheet.tile.pf1, sheet.tile.pf2, sheet.tile.pf3, sheet.tile.pf4, sheet.tile.pf5, sheet.tile.pf6, sheet.tile.pf7];
+                    sheet.anim.wb1_b = [sheet.tile.wb1_b0, sheet.tile.wb1_b1, sheet.tile.wb1_b2, sheet.tile.wb1_b3, sheet.tile.wb1_b4];
                     if (db.val) {
                         var dcv = db.cv(sheet.img.width, sheet.img.height);
                         if (dcv) {
@@ -1037,7 +1039,7 @@
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
     };
-    enemy1.opts = [missileAct];
+    enemy1.opts = [laserBeamAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1123,7 +1125,7 @@
     };
     hero2.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [mahouAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: []},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [laserBeamAct]},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
 
@@ -1552,6 +1554,181 @@
         q.add(fn, dt, dt3);
 
         return [dt2, dt3];
+    };
+
+    function laserBeamAct(src, tgt, dt) {
+        var dt0 = 1000;
+        var dx = tgt.x[3] < src.x[3] ? -1 : 1;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + (tgt.tile.h >> 1) - (src.tile.h >> 1));
+        var dt2 = dt1 + laserBeamAct.laser(src, tgt, dt1);
+        var rdt = dt;
+        pyro2Anim(src.x[0] + dx * 120, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 300);
+        pyro2Anim(src.x[0] + dx * 170, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 600);
+        pyro2Anim(src.x[0] + dx * 220, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 900);
+        units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt1 + 900);
+        msgDlg.show(lang.laserBeamAttack, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt2) {
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.a[1];
+                }
+                if (mydt >= dt1 + 250) {
+                    units.hurt(tgt, mydt - dt1 - 250);
+                }
+            }
+        };
+    }
+    laserBeamAct.laser = function(src, tgt, dt) {
+        var dt0 = 500;
+        var dt1 = dt0 + 1000;
+        var dt2 = dt1 + 500;
+        var img = sprite.sheet.btl1.img;
+        var left = sprite.sheet.btl1.tile.wb1_i0;
+        var mid = sprite.sheet.btl1.tile.wb1_i1;
+        var right = sprite.sheet.btl1.tile.wb1_i2;
+        var flip = tgt.x[0] > src.x[0];
+
+        var fn = function(dt) {
+            var y = src.y[0] + (src.tile.h >> 1) - (mid.h >> 1);
+            var x0, x1;
+            if (flip) {
+                x0 = src.x[0] + src.tile.w + left.w;
+                x1 = src.fb.cv.width;
+            } else {
+                x0 = 0;
+                x1 = src.x[0] - right.w;
+            }
+            if (dt >= dt1) {
+                var w = ((dt2 - dt) / (dt2 - dt1) * (x1 - x0)) | 0;
+                if (flip) {
+                    src.fb.cx.save();
+                    src.fb.cx.translate(x0, 0);
+                    src.fb.cx.scale(-1, 1);
+                    src.fb.cx.drawImage(
+                        img,
+                        mid.x, mid.y, mid.w, mid.h,
+                        x0 - x1, y, w, mid.h
+                    );
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        x0 - x1 + w, y, right.w, right.h
+                    );
+                    src.fb.cx.restore();
+                } else {
+                    src.fb.cx.drawImage(
+                        img,
+                        mid.x, mid.y, mid.w, mid.h,
+                        x0, y, w, mid.h
+                    );
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        x0 + w, y, right.w, right.h
+                    );
+                }
+            } else if (dt >= dt0) {
+                if (flip) {
+                    src.fb.cx.save();
+                    src.fb.cx.translate(x0, 0);
+                    src.fb.cx.scale(-1, 1);
+                    src.fb.cx.drawImage(
+                        img,
+                        mid.x, mid.y, mid.w, mid.h,
+                        x0 - x1, y, x1 - x0, mid.h
+                    );
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        0, y, right.w, right.h
+                    );
+                    src.fb.cx.restore();
+                } else {
+                    src.fb.cx.drawImage(
+                        img,
+                        mid.x, mid.y, mid.w, mid.h,
+                        x0, y, x1 - x0, mid.h
+                    );
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        x1, y, right.w, right.h
+                    );
+                }
+            } else {
+                var w = (dt / dt0 * (x1 - x0)) | 0;
+                if (flip) {
+                    src.fb.cx.save();
+                    src.fb.cx.translate(x0, 0);
+                    src.fb.cx.scale(-1, 1);
+                    src.fb.cx.drawImage(
+                        img,
+                        left.x, left.y, left.w, left.h,
+                        -w - left.w, y, left.w, left.h
+                    );
+                    if (0 < w) {
+                        src.fb.cx.drawImage(
+                            img,
+                            mid.x, mid.y, mid.w, mid.h,
+                            -w, y, w, mid.h
+                        );
+                    }
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        0, y, right.w, right.h
+                    );
+                    src.fb.cx.restore();
+                } else {
+                    src.fb.cx.drawImage(
+                        img,
+                        left.x, left.y, left.w, left.h,
+                        x1 - w - left.w, y, left.w, left.h
+                    );
+                    if (0 < w) {
+                        src.fb.cx.drawImage(
+                            img,
+                            mid.x, mid.y, mid.w, mid.h,
+                            x1 - w, y, w, mid.h
+                        );
+                    }
+                    src.fb.cx.drawImage(
+                        img,
+                        right.x, right.y, right.w, right.h,
+                        x1, y, right.w, right.h
+                    );
+                }
+            }
+        };
+        q.add(fn, dt, dt2);
+
+        return dt2;
+    };
+
+    function pyro2Anim(x, y, w, h, cx, sheet, anim, ts) {
+        var len = anim.length / sprite.anim;
+        pyro2Anim.one((x + 0.75 * w) | 0, (y + 0.25 * h) | 0, cx, sheet, anim, ts);
+        pyro2Anim.one((x + 0.25 * w) | 0, (y + 0.5 * h) | 0, cx, sheet, anim, ts + (len >> 1));
+        pyro2Anim.one((x + 0.6 * w) | 0, (y + 0.75 * h) | 0, cx, sheet, anim, ts + len);
+        return len << 1;
+    }
+    pyro2Anim.one = function(x, y, cx, sheet, anim, ts) {
+        var len = anim.length / sprite.anim;
+        var fn = function(dt) {
+            var tile = anim[((sprite.anim * dt) | 0) % anim.length];
+            cx.drawImage(
+                sheet.img,
+                tile.x, tile.y, tile.w, tile.h,
+                x - (tile.w >> 1), y - (tile.h >> 1), tile.w, tile.h
+            );
+        }
+        q.add(fn, ts, len);
     };
 
     function pyroAnim(unit, sheet, anim, ts) {
