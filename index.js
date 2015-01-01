@@ -33,6 +33,13 @@
     };
 
     var lang = {
+        hero1: 'Locke',
+        hero2: 'Celes',
+        hero3: 'Mog',
+        enemy1: 'Air Force',
+        optAttack: 'Attack',
+        optSpecial: 'Special',
+        optHeal: 'Heal',
         cure: 'Cure',
         revive: 'Revive'
     };
@@ -959,7 +966,7 @@
     enemy1.rst = function(fb, x, y, actDt) {
         units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 48000, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
-        enemy1.nam = 'Air Force';
+        enemy1.nam = lang.enemy1;
     };
 
     var heroes = {
@@ -1007,7 +1014,7 @@
     }
     hero1.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero1, fb, x, dx, y, actDt, 'Locke', {
+        heroes.rst(hero1, fb, x, dx, y, actDt, lang.hero1, {
             a: sheet.anim.h0_a,
             h: sheet.anim.h0_h,
             l: sheet.tile.h0_l,
@@ -1021,7 +1028,7 @@
     }
     hero2.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero2, fb, x, dx, y, actDt, 'Celes', {
+        heroes.rst(hero2, fb, x, dx, y, actDt, lang.hero2, {
             a: sheet.anim.h1_a,
             h: sheet.anim.h1_h,
             l: sheet.tile.h1_l,
@@ -1035,7 +1042,7 @@
     }
     hero3.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero3, fb, x, dx, y, actDt, 'Mog', {
+        heroes.rst(hero3, fb, x, dx, y, actDt, lang.hero3, {
             a: sheet.anim.h2_a,
             h: sheet.anim.h2_h,
             l: sheet.tile.h2_l,
@@ -1320,9 +1327,9 @@
         hero3.rst(scn.fb2, 279, 7, 138, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         var opts = [
-            {name: 'Attack', tgts: [enemy1], acts: []},
-            {name: 'Special', tgts: [enemy1], acts: []},
-            {name: 'Heal', tgts: [hero1, hero2, hero3], acts: [healAct]}
+            {name: lang.optAttack, tgts: [enemy1], acts: []},
+            {name: lang.optSpecial, tgts: [enemy1], acts: []},
+            {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
         ];
         heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56, opts);
         q.add(enemyDlg, 0, 0);
