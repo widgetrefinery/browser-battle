@@ -988,6 +988,7 @@
                     hero.actFn(hero, dt);
                 } else {
                     hero.actFn = heroOptDlg;
+                    heroOptDlg.lst = hero.opts;
                 }
             }
             var tile = hero.tile;
@@ -1022,6 +1023,11 @@
             v: sheet.tile.h0_v
         });
     };
+    hero1.opts = [
+        {name: lang.optAttack, tgts: [enemy1], acts: []},
+        {name: lang.optSpecial, tgts: [enemy1], acts: []},
+        {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
+    ];
 
     function hero2(dt) {
         heroes.upd(hero2, dt);
@@ -1036,6 +1042,11 @@
             v: sheet.tile.h1_v
         });
     };
+    hero2.opts = [
+        {name: lang.optAttack, tgts: [enemy1], acts: []},
+        {name: lang.optSpecial, tgts: [enemy1], acts: []},
+        {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
+    ];
 
     function hero3(dt) {
         heroes.upd(hero3, dt);
@@ -1050,6 +1061,11 @@
             v: sheet.tile.h2_v
         });
     };
+    hero3.opts = [
+        {name: lang.optAttack, tgts: [enemy1], acts: []},
+        {name: lang.optSpecial, tgts: [enemy1], acts: []},
+        {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
+    ];
 
     function healAct(src, tgt, dt) {
         if (0 < tgt.chp) {
@@ -1213,20 +1229,19 @@
                 units.rdy.shift();
                 units.rdy.push(hero);
                 hero.actFn = undefined;
-                heroOptDlg._opt = 0;
-                heroOptDlg._tgt = undefined;
+                heroOptDlg.rst2();
                 return;
             }
             if (io.ok) {
                 heroOptDlg._tgt = 0;
             } else if (io.up) {
-                heroOptDlg._opt = (heroOptDlg._opt - 1 + heroOptDlg._lst.length) % heroOptDlg._lst.length;
+                heroOptDlg._opt = (heroOptDlg._opt - 1 + heroOptDlg.lst.length) % heroOptDlg.lst.length;
             } else if (io.down) {
-                heroOptDlg._opt = (heroOptDlg._opt + 1) % heroOptDlg._lst.length;
+                heroOptDlg._opt = (heroOptDlg._opt + 1) % heroOptDlg.lst.length;
             }
         } else {
             if (io.ok) {
-                var opt = heroOptDlg._lst[heroOptDlg._opt];
+                var opt = heroOptDlg.lst[heroOptDlg._opt];
                 if (0 === opt.acts.length) {
                     units.actRst(hero, dt);
                     heroOptDlg._opt = 0;
@@ -1237,7 +1252,7 @@
                 }
                 return;
             }
-            var len = heroOptDlg._lst[heroOptDlg._opt].tgts.length;
+            var len = heroOptDlg.lst[heroOptDlg._opt].tgts.length;
             if (io.back) {
                 heroOptDlg._tgt = undefined;
             } else if (io.up) {
@@ -1249,13 +1264,13 @@
         var cx = heroOptDlg._fb.cx;
         var sheet = sprite.sheet.hud;
         var txt = '';
-        for (var i = 0; i < heroOptDlg._lst.length; i++) {
+        for (var i = 0; i < heroOptDlg.lst.length; i++) {
             if (heroOptDlg._opt === i) {
                 txt += '\x00ty';
             } else {
                 txt += '\x00tw';
             }
-            txt += heroOptDlg._lst[i].name + '\n\n';
+            txt += heroOptDlg.lst[i].name + '\n\n';
         }
         sprite.dlg(cx, heroOptDlg._x, heroOptDlg._y, heroOptDlg._w, heroOptDlg._h, sheet);
         sprite.txtL(cx, heroOptDlg._x + 16, heroOptDlg._y + 8, sheet, txt);
@@ -1266,7 +1281,7 @@
             var cur = sheet.tile.icon_curR;
             cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, heroOptDlg._x, heroOptDlg._y + 4 + 16 * heroOptDlg._opt, cur.w, cur.h);
         } else {
-            var tgt = heroOptDlg._lst[heroOptDlg._opt].tgts[heroOptDlg._tgt];
+            var tgt = heroOptDlg.lst[heroOptDlg._opt].tgts[heroOptDlg._tgt];
             if (tgt.x[0] < (tgt.fb.cv.width >> 1)) {
                 var cur = sheet.tile.icon_curL;
                 cx.drawImage(sheet.img, cur.x, cur.y, cur.w, cur.h, tgt.x[0] + tgt.tile.w, tgt.y[0] + (tgt.tile.h >> 1) - (cur.h >> 1), cur.w, cur.h);
@@ -1276,13 +1291,13 @@
             }
         }
     }
-    heroOptDlg.rst = function(fb, x, y, w, h, lst) {
+    heroOptDlg.rst = function(fb, x, y, w, h) {
         heroOptDlg._fb = fb;
         heroOptDlg._x = x;
         heroOptDlg._y = y;
         heroOptDlg._w = w;
         heroOptDlg._h = h;
-        heroOptDlg._lst = lst;
+        heroOptDlg.lst = [];
         heroOptDlg.rst2();
     }
     heroOptDlg.rst2 = function() {
@@ -1326,12 +1341,7 @@
         hero2.rst(scn.fb2, 272, 0, 108, 900);
         hero3.rst(scn.fb2, 279, 7, 138, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
-        var opts = [
-            {name: lang.optAttack, tgts: [enemy1], acts: []},
-            {name: lang.optSpecial, tgts: [enemy1], acts: []},
-            {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
-        ];
-        heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56, opts);
+        heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56 * 2, 80, 56);
         q.add(enemyDlg, 0, 0);
         q.add(heroDlg, 0, 0);
         q.add(enemy1, 1000, 0);
