@@ -43,6 +43,7 @@
         swordAttack: 'Flame Sabre',
         mahouAttack: 'Flare',
         meleeAttack: 'Kaio Ken',
+        missileAttack: 'Cluster Missile',
         cure: 'Cure',
         revive: 'Revive'
     };
@@ -501,12 +502,15 @@
                     sheet.anim.h2_h = [sheet.tile.h2_h0, sheet.tile.h2_h1];
                     sheet.anim.ws_s = [sheet.tile.ws_s0, sheet.tile.ws_s1, sheet.tile.ws_s2];
                     sheet.anim.ws_w = [sheet.tile.ws_w0, sheet.tile.ws_w1, sheet.tile.ws_w2];
+                    sheet.anim.me = [sheet.tile.me0, sheet.tile.me1, sheet.tile.me2, sheet.tile.me3];
+                    sheet.anim.mr = [sheet.tile.mr0, sheet.tile.mr1, sheet.tile.mr2, sheet.tile.mr3, sheet.tile.mr4, sheet.tile.mr5, sheet.tile.mr6, sheet.tile.mr7];
                     sheet.anim.pm = [sheet.tile.pm0, sheet.tile.pm1, sheet.tile.pm2, sheet.tile.pm3];
                     sheet.anim.ir = [sheet.tile.ir0, sheet.tile.ir1, sheet.tile.ir2, sheet.tile.ir3, sheet.tile.ir4, sheet.tile.ir5, sheet.tile.ir6, sheet.tile.ir7];
                     sheet.anim.ih_g = [sheet.tile.ih_g0, sheet.tile.ih_g1, sheet.tile.ih_g2, sheet.tile.ih_g3];
                     sheet.anim.ih_p = [sheet.tile.ih_p0, sheet.tile.ih_p1, sheet.tile.ih_p2, sheet.tile.ih_p3];
                     sheet.anim.ih_r = [sheet.tile.ih_r0, sheet.tile.ih_r1, sheet.tile.ih_r2, sheet.tile.ih_r3];
                     sheet.anim.ps = [sheet.tile.ps0, sheet.tile.ps1, sheet.tile.ps2, sheet.tile.ps3, sheet.tile.ps4];
+                    sheet.anim.pb = [sheet.tile.pb0, sheet.tile.pb1, sheet.tile.pb2, sheet.tile.pb3];
                     sheet.anim.pf = [sheet.tile.pf0, sheet.tile.pf1, sheet.tile.pf2, sheet.tile.pf3, sheet.tile.pf4, sheet.tile.pf5, sheet.tile.pf6, sheet.tile.pf7];
                     if (db.val) {
                         var dcv = db.cv(sheet.img.width, sheet.img.height);
@@ -726,14 +730,16 @@
         switch(dc._st) {
             case 1:
                 var fps = (1000 / tick.dt) | 0;
-                sprite.dlg(cx, 0, 0, 120, 48, sprite.sheet.hud);
-                sprite.txtL(
-                    cx, 8, 8, sprite.sheet.hud,
-                    'Pg1'
+                sprite.dlg(cx, 0, 0, 240, 56, sprite.sheet.hud);
+                var txt = 'Pg1'
                     + '\nfps:' + fps
                     + '\nen0.chp:' + enemy1.chp
                     + '\nen0.act:' + enemy1.act
-                );
+                    + '\nrdy:';
+                for (var i = 0; i < units.rdy.length; i++) {
+                    txt += units.rdy[i].name + ' ';
+                }
+                sprite.txtL(cx, 8, 8, sprite.sheet.hud, txt);
                 break;
             case 2:
                 if (io.kb.up === io.raw) {
@@ -917,9 +923,20 @@
         },
         chgHp: function(unit, amt, ts) {
             var fn0 = function() {
+                if (0 === unit.chp && 0 < amt) {
+                    unit.act = 0;
+                    unit.actDt = tick.ts - unit.q.ts;
+                    unit.actFn = undefined;
+                }
                 unit.chp += amt;
-                if (0 > unit.chp) {
+                if (0 >= unit.chp) {
                     unit.chp = 0;
+                    for (var i = 0; i < units.rdy.length; i++) {
+                        if (unit === units.rdy[i]) {
+                            units.rdy.splice(i, 1);
+                            break;
+                        }
+                    }
                 } else if (unit.chp > unit.mhp) {
                     unit.chp = unit.mhp;
                 }
@@ -985,14 +1002,32 @@
         units.act(enemy1, dt);
         units.mov(enemy1, dt);
         var tile = enemy1.tile;
+        if (enemy1 === units.rdy[0]) {
+            if (enemy1.actFn) {
+                enemy1.actFn(enemy1, dt);
+            } else {
+                var tgts = [];
+                if (0 < hero1.chp) {
+                    tgts.push(hero1);
+                }
+                if (0 < hero2.chp) {
+                    tgts.push(hero2);
+                }
+                if (0 < hero3.chp) {
+                    tgts.push(hero3);
+                }
+                var tgt = tgts[prng(tgts.length)];
+                enemy1.opts[prng(enemy1.opts.length)](enemy1, tgt, dt);
+            }
+        }
         enemy1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, enemy1.x[0], enemy1.y[0], tile.w, tile.h);
-        units.actRst(enemy1, dt);
     }
     enemy1.rst = function(fb, x, y, actDt) {
         units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 48000, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
     };
+    enemy1.opts = [missileAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1055,7 +1090,7 @@
     };
     hero1.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [swordAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: []},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [missileAct]},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
 
@@ -1180,7 +1215,7 @@
         var dt2 = dt1 + len0;
         var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pm, dt2);
         var rdt = dt;
-        units.chgHp(tgt, -300 - prng(100), dt2);
+        units.chgHp(tgt, -200 - prng(200), dt2);
         msgDlg.show(lang.swordAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1216,7 +1251,7 @@
         var dt2 = dt1 + len0;
         var dt3 = dt2 + pyroAnim(tgt, sprite.sheet.btl1, sprite.sheet.btl1.anim.pf, dt2);
         var rdt = dt;
-        units.chgHp(tgt, -200 - prng(200), dt2);
+        units.chgHp(tgt, -300 - prng(100), dt2);
         msgDlg.show(lang.mahouAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1348,6 +1383,161 @@
             (tgt.x[0] + (tgt.tile.w >> 1) + src.tile.w * conf1.x) | 0,
             (tgt.y[0] + (tgt.tile.h >> 1) + src.tile.h * conf1.y) | 0
         ];
+    };
+
+    function missileAct(src, tgt, dt) {
+        var dt0 = 1000;
+        var dx = tgt.x[3] < src.x[3] ? -24 : 24;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx, src.y[3], src.y[3]);
+        var dt2 = dt1 + missileAct.ret(tgt, dt1);
+        var oneLen = missileAct.one(src, tgt, dt2);
+        missileAct.one(src, tgt, dt2 + 2 / sprite.anim);
+        missileAct.one(src, tgt, dt2 + 4 / sprite.anim);
+        var dt3 = dt2 + oneLen[0];
+        var dt4 = dt2 + oneLen[1] + 4 / sprite.anim;
+        var rdt = dt;
+        units.chgHp(tgt, -300 - prng(100), dt3);
+        msgDlg.show(lang.missileAttack, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt4) {
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.a[1];
+                }
+                if (mydt >= dt3) {
+                    units.hurt(tgt, mydt - dt3);
+                }
+            }
+        };
+    }
+    missileAct.ret = function(tgt, dt) {
+        var anim = sprite.sheet.btl1.anim.mr;
+        var len = anim.length / sprite.anim;
+
+        var fn = function(dt) {
+            var tile = anim[((dt * sprite.anim) | 0) % anim.length];
+            tgt.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                tile.x, tile.y, tile.w, tile.h,
+                tgt.x[0] + (tgt.tile.w >> 1) - (tile.w >> 1),
+                tgt.y[0] + (tgt.tile.h >> 1) - (tile.h >> 1),
+                tile.w, tile.h
+            );
+        };
+        q.add(fn, dt, len);
+
+        return len;
+    };
+    missileAct.one = function(src, tgt, dt) {
+        var anim0 = sprite.sheet.btl1.anim.me;
+        var anim1 = sprite.sheet.btl1.anim.pb;
+        var len1 = anim1.length / sprite.anim;
+        var dt0 = 250; // ignite exhaust
+        var dt1 = dt0 << 1; // missile has fallen from (x0, y0) to (x0, y1)
+        var dt2 = dt1 + (2000 / src.fb.cv.width * Math.abs(tgt.x[0] - src.x[0])) + 0; // missile flew from (x0, y1) to (x2, y2)
+        var dt3 = dt2 + len1; // pyrotechnics
+        var flip = tgt.x[0] > src.x[0];
+        var x0, y0, x1, y1, y2;
+
+        var fn = function(dt) {
+            if (undefined === x0) {
+                x0 = src.x[0] + (src.tile.w >> 1);
+                y0 = src.y[0] + (src.tile.h >> 1);
+                y1 = y0 + 16;
+                x2 = tgt.x[0] + (tgt.tile.w >> 1);
+                y2 = tgt.y[0] + (tgt.tile.h >> 1);
+            }
+            if (dt > dt2) {
+                var tile = anim1[(((dt - dt2) * sprite.anim) | 0) % anim1.length];
+                tgt.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    tile.x, tile.y, tile.w, tile.h,
+                    x2 - (tile.w >> 1),
+                    y2 - (tile.h >> 1),
+                    tile.w, tile.h
+                );
+                return;
+            } else if (dt > dt1) {
+                var off = (dt - dt1) / (dt2 - dt1);
+                var dx = off * (x2 - x0) + x0;
+                var dy = off * (y2 - y1) + y1;
+                var tile = sprite.sheet.btl1.tile.mb;
+                if (flip) {
+                    src.fb.cx.save();
+                    src.fb.cx.translate(dx, dy);
+                    src.fb.cx.scale(-1, 1);
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        -tile.w, 0, tile.w, tile.h
+                    );
+                    tile = anim0[((sprite.anim * (dt - dt0)) | 0) % anim0.length];
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        0, 0, tile.w, tile.h
+                    );
+                    src.fb.cx.restore();
+                } else {
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        dx - tile.w, dy, tile.w, tile.h
+                    );
+                    tile = anim0[((sprite.anim * (dt - dt0)) | 0) % anim0.length];
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        dx, dy, tile.w, tile.h
+                    );
+                }
+            } else {
+                var off = dt / dt1;
+                var dy = off * (y1 - y0) + y0;
+                var tile = sprite.sheet.btl1.tile.mb;
+                if (flip) {
+                    src.fb.cx.save();
+                    src.fb.cx.translate(x0, dy);
+                    src.fb.cx.scale(-1, 1);
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        -tile.w, 0, tile.w, tile.h
+                    );
+                    if (dt > dt0) {
+                        tile = anim0[((sprite.anim * (dt - dt0)) | 0) % anim0.length];
+                        src.fb.cx.drawImage(
+                            sprite.sheet.btl1.img,
+                            tile.x, tile.y, tile.w, tile.h,
+                            0, 0, tile.w, tile.h
+                        );
+                    }
+                    src.fb.cx.restore();
+                } else {
+                    src.fb.cx.drawImage(
+                        sprite.sheet.btl1.img,
+                        tile.x, tile.y, tile.w, tile.h,
+                        x0 - tile.w, dy, tile.w, tile.h
+                    );
+                    if (dt > dt0) {
+                        tile = anim0[((sprite.anim * (dt - dt0)) | 0) % anim0.length];
+                        src.fb.cx.drawImage(
+                            sprite.sheet.btl1.img,
+                            tile.x, tile.y, tile.w, tile.h,
+                            x0, dy, tile.w, tile.h
+                        );
+                    }
+                }
+            }
+        };
+        q.add(fn, dt, dt3);
+
+        return [dt2, dt3];
     };
 
     function pyroAnim(unit, sheet, anim, ts) {
