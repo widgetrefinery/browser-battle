@@ -46,7 +46,8 @@
         missileAttack: 'Cluster Missile',
         laserBeamAttack: 'Magitek Laser',
         cure: 'Cure',
-        revive: 'Revive'
+        revive: 'Revive',
+        ko: 'Defeated is your party.'
     };
 
     var sprite = {
@@ -860,8 +861,12 @@
     };
 
     var units = {
+        end: undefined,
         rdy: [],
         act: function(unit, dt) {
+            if (units.end) {
+                return;
+            }
             if (0 >= unit.chp) {
                 unit.act = 0;
                 unit.actDt = dt;
@@ -1039,7 +1044,7 @@
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
     };
-    enemy1.opts = [laserBeamAct];
+    enemy1.opts = [missileAct, missileAct, laserBeamAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1925,9 +1930,27 @@
     function btlScn() {
         scn.fb2.clr();
         scn.fb3.clr();
+        if (1 === units.end) {
+            if (4000 <= tick.ts - msgDlg.q.ts && io.raw) {
+                q.del(msgDlg);
+                units.end = 2;
+                fadeAnim.rst(scn.fb3, false);
+                q.add(fadeAnim, 0, 2000);
+            }
+        } else if (2 === units.end) {
+            if (fadeAnim.q.td <= tick.ts - fadeAnim.q.ts) {
+                exitScn.rst();
+                scn.run = exitScn;
+                exitScn();
+            }
+        } else if (0 === hero1.chp && 0 === hero2.chp && 0 === hero3.chp) {
+            units.end = 1;
+            msgDlg.show(lang.ko, 0, 0);
+        }
     }
     btlScn.rst = function() {
         q.rst();
+        units.end = undefined;
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
         msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
