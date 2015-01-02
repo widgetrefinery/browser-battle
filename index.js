@@ -1170,7 +1170,7 @@
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
     };
-    enemy1.opts = [missileAct, missileAct, laserBeamAct];
+    enemy1.opts = [missileAct, missileAct, missileAct, laserBeamAct, laserBeamAct, lightningBeamAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1703,7 +1703,7 @@
 
         units.chgHp(tgt, dmg, dt + dt2, tx, ty - 8);
 
-        return [dt2, dt3];
+        return [dt2, dt3 + (2 / sprite.anim) | 0];
     };
 
     function laserBeamAct(src, tgt, dt) {
@@ -1804,7 +1804,7 @@
         var dx = flip ? 1 : -1;
         pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 300);
         pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 600);
-        var dt3 = dt1 + pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 900);
+        var dt3 = dt1 + 900 + pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 900);
         units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt + dt1 + 300, -dx * (tgt.tile.w >> 1), -8);
 
         return dt3;
@@ -1824,15 +1824,20 @@
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
                 units.actRst(unit, dt);
                 units.movInst(tgt, tgt.x[3], tgt.y[3]);
-            } else if (mydt >= dt1 + 250) {
-                units.hurt(tgt, mydt - dt1 - 250);
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.a[1];
+                }
+                if (mydt >= dt1 + 25) {
+                    units.hurt(tgt, mydt - dt1 - 250);
+                }
             }
         };
     }
     lightningBeamAct.beam = function(src, tgt, dt) {
         var dt0 = 250; // extend
         var dt1 = dt0 + (3 / sprite.anim) | 0; // widen
-        var dt2 = dt1 + (8 * sprite.sheet.btl1.anim.wb0_i.length / sprite.anim) | 0; // cycle
+        var dt2 = dt1 + (4 * sprite.sheet.btl1.anim.wb0_i.length / sprite.anim) | 0; // cycle
         var dt3 = dt2 + (8 / sprite.anim) | 0; //shrink
         var flip = tgt.x[0] > src.x[3];
 
@@ -1869,7 +1874,7 @@
                     src.fb.cx.drawImage(
                         sprite.sheet.btl1.img,
                         tile.x, tile.y, tile.w, tile.h,
-                        1 - w, y - (tile.h >> 1), w - 1, tile.h
+                        -w, y - (tile.h >> 1), w - 1, tile.h
                     );
                 }
                 if (f < anim0.length - 5) {
@@ -1877,7 +1882,7 @@
                     src.fb.cx.drawImage(
                         sprite.sheet.btl1.img,
                         tile.x, tile.y, tile.w, tile.h,
-                        3 - w, y - (tile.h >> 1), w - 3, tile.h
+                        -w, y - (tile.h >> 1), w - 3, tile.h
                     );
                 }
                 if (f < anim0.length) {
@@ -1954,7 +1959,7 @@
                     src.fb.cx.drawImage(
                         sprite.sheet.btl1.img,
                         tile.x, tile.y, tile.w, tile.h,
-                        1 - w, y - (tile.h >> 1), w - 1, tile.h
+                        -w, y - (tile.h >> 1), w - 1, tile.h
                     );
                 }
                 if (2 <= f) {
@@ -1962,7 +1967,7 @@
                     src.fb.cx.drawImage(
                         sprite.sheet.btl1.img,
                         tile.x, tile.y, tile.w, tile.h,
-                        2 - w, y - (tile.h >> 1), w - 2, tile.h
+                        -w, y - (tile.h >> 1), w - 3, tile.h
                     );
                 }
             } else {
