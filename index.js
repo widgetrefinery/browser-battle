@@ -980,8 +980,8 @@
             if (dt < unit.movDt) {
                 return;
             }
-            units.movPos(unit.x, unit.movSpd, dt - unit.movDt);
-            units.movPos(unit.y, unit.movSpd, dt - unit.movDt);
+            units.movPos(unit.x, unit.movSpdX, dt - unit.movDt);
+            units.movPos(unit.y, unit.movSpdY, dt - unit.movDt);
             if (unit.x[0] === unit.x[2] && unit.y[0] === unit.y[2]) {
                 unit.movDt = dt;
             }
@@ -1005,9 +1005,16 @@
             unit.y[0] = unit.y[1] = y0;
             unit.y[2] = y1;
             unit.movDt += dt;
-            var dx = Math.abs(x1 - x0) / unit.movSpd;
-            var dy = Math.abs(y1 - y0) / unit.movSpd;
-            return Math.max(dx, dy) | 0;
+            var dx = Math.abs(x1 - x0);
+            var dy = Math.abs(y1 - y0);
+            if (dx > dy) {
+                unit.movSpdX = unit.movSpd;
+                unit.movSpdY = unit.movSpd * dy / dx;
+            } else {
+                unit.movSpdX = unit.movSpd * dx / dy;
+                unit.movSpdY = unit.movSpd;
+            }
+            return (Math.max(dx, dy) / unit.movSpd) | 0;
         },
         movInst: function(unit, x, y) {
             unit.x[0] = unit.x[1] = unit.x[2] = x;
@@ -1082,7 +1089,7 @@
             unit.fb = fb;
             unit.x = [x, x, x, x];
             unit.y = [y, y, y, y];
-            unit.movSpd = movSpd;
+            unit.movSpd = unit.movSpdX = unit.movSpdY = movSpd;
             unit.movDt = 0;
             unit.act = 0;
             unit.actSpd = actSpd;
