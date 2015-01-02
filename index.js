@@ -49,7 +49,7 @@
         cure: 'Cure',
         revive: 'Revive',
         ko: 'Your team passed out.',
-        win: 'You gained 999999 exp.'
+        win: 'You gained 0 exp.'
     };
 
     var sprite = {
