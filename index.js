@@ -1151,7 +1151,7 @@
         }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 24000, 1, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 24000, 14, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
@@ -1214,12 +1214,10 @@
                 hero.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, hero.x[0], hero.y[0], tile.w, tile.h);
             }
         },
-        rst: function(hero, fb, x, dx, y, actDt, name, anim) {
-            var actSpd = prng(4) / 100 + 0.06;
-            var hp = prng(400) + 1200;
-            units.rst(hero, fb, x, y, 0.16, actSpd, actDt, hp, 4, 'fr', anim.a[0]);
+        rst: function(hero, fb, x, dx, y, actSpd, actDt, name, anim) {
+            var hp = prng(600) + 3200;
+            units.rst(hero, fb, x, y, 0.16, actSpd, actDt, hp, 13, 'fr', anim.a[0]);
             units.movRst(hero, 0, fb.cv.width + 16 + dx, x, y, y);
-            hero.chp = hero.mhp >> 1;
             hero.nam = name;
             hero.anim = anim;
             hero.mirV = false;
@@ -1233,7 +1231,7 @@
     }
     hero1.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero1, fb, x, dx, y, actDt, lang.hero1, {
+        heroes.rst(hero1, fb, x, dx, y, 0.023, actDt, lang.hero1, {
             a: sheet.anim.h0_a,
             h: sheet.anim.h0_h,
             l: sheet.tile.h0_l,
@@ -1252,7 +1250,7 @@
     }
     hero2.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero2, fb, x, dx, y, actDt, lang.hero2, {
+        heroes.rst(hero2, fb, x, dx, y, 0.025, actDt, lang.hero2, {
             a: sheet.anim.h1_a,
             h: sheet.anim.h1_h,
             l: sheet.tile.h1_l,
@@ -1271,7 +1269,7 @@
     }
     hero3.rst = function(fb, x, dx, y, actDt) {
         var sheet = sprite.sheet.btl1;
-        heroes.rst(hero3, fb, x, dx, y, actDt, lang.hero3, {
+        heroes.rst(hero3, fb, x, dx, y, 0.021, actDt, lang.hero3, {
             a: sheet.anim.h2_a,
             h: sheet.anim.h2_h,
             l: sheet.tile.h2_l,
@@ -1299,7 +1297,7 @@
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
         var dt2 = dt1 + pyroAnim(tgt, sprite.sheet.btl1, anim, dt1);
         var rdt = dt;
-        units.chgHp(tgt, (tgt.mhp / 5) | 0, (dt2 + dt1) >> 1);
+        units.chgHp(tgt, (tgt.mhp / 4) | 0, (dt2 + dt1) >> 1);
         msgDlg.show(lang.cure, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1591,7 +1589,7 @@
         var len1 = anim1.length / sprite.anim;
         var dt0 = 250; // ignite exhaust
         var dt1 = dt0 << 1; // missile has fallen from (x0, y0) to (x0, y1)
-        var dt2 = dt1 + (2000 / src.fb.cv.width * Math.abs(tgt.x[0] - src.x[0])) + 0; // missile flew from (x0, y1) to (x2, y2)
+        var dt2 = dt1 + (2000 / src.fb.cv.width * Math.abs(tgt.x[3] - src.x[3])) + 0; // missile flew from (x0, y1) to (x2, y2)
         var dt3 = dt2 + len1; // pyrotechnics
         var flip = tgt.x[0] > src.x[0];
         var x0, y0, x1, y1, y2;
@@ -1699,9 +1697,9 @@
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + (tgt.tile.h >> 1) - (src.tile.h >> 1));
         var dt2 = dt1 + laserBeamAct.laser(src, tgt, dt1);
         var rdt = dt;
-        pyro2Anim(src.x[0] + dx * 120, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 300);
-        pyro2Anim(src.x[0] + dx * 170, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 600);
-        pyro2Anim(src.x[0] + dx * 220, tgt.y[0] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 900);
+        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 300);
+        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 600);
+        pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 900);
         units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt1 + 900);
         msgDlg.show(lang.laserBeamAttack, 0, 2000);
 
@@ -1896,9 +1894,10 @@
     };
 
     function enemyDlg() {
-        var txt = enemyDlg._val.nam;
         sprite.dlg(enemyDlg._fb.cx, enemyDlg._x, enemyDlg._y, enemyDlg._w, enemyDlg._h, sprite.sheet.hud);
-        sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, txt);
+        if (0 < enemyDlg._val.chp) {
+            sprite.txtL(enemyDlg._fb.cx, enemyDlg._x + 8, enemyDlg._y + 8, sprite.sheet.hud, enemyDlg._val.nam);
+        }
     }
     enemyDlg.rst = function(fb, x, y, w, h, val) {
         enemyDlg._fb = fb;
@@ -2077,13 +2076,13 @@
             if (10000 <= q.dt(enemy1) - enemy1.ddt) {
                 btlScn._st = 1;
                 msgDlg.show(lang.win, 0, 0);
-                if (0 < hero1.chp) {
+                if (hero1.mhp * 0.25 <= hero1.chp) {
                     hero1.vdt = q.dt(hero1);
                 }
-                if (0 < hero2.chp) {
+                if (hero2.mhp * 0.25 <= hero2.chp) {
                     hero2.vdt = q.dt(hero2);
                 }
-                if (0 < hero3.chp) {
+                if (hero3.mhp * 0.25 <= hero3.chp) {
                     hero3.vdt = q.dt(hero3);
                 }
             }
