@@ -501,7 +501,8 @@
                     pf4:    {x:   0, y: 256, w: 32, h: 32},
                     pf5:    {x:  32, y: 256, w: 32, h: 32},
                     pf6:    {x:   0, y: 288, w: 32, h: 32},
-                    pf7:    {x:  32, y: 288, w: 32, h: 32}
+                    pf7:    {x:  32, y: 288, w: 32, h: 32},
+                    bg:     {x: 192, y:   0, w: 144, h: 240}
                 },
                 anim: {},
                 init: function() {
@@ -630,7 +631,7 @@
         this.cx.imageSmoothingEnabled = false;
         FB._lst.push(this);
         if (db.val) {
-            this._dcv = db.cv(320, 196);
+            this._dcv = db.cv(320, 192);
             if (this._dcv) {
                 this._dcx = this._dcv.getContext('2d');
             }
@@ -774,9 +775,9 @@
         io.rst();
         requestAnimationFrame(scn);
     }
-    scn.fb1 = new FB(320, 196);
-    scn.fb2 = new FB(320, 196);
-    scn.fb3 = new FB(320, 196);
+    scn.fb1 = new FB(320, 192);
+    scn.fb2 = new FB(320, 192);
+    scn.fb3 = new FB(320, 192);
 
     function dc() {
         var cx = scn.fb3.cx;
@@ -912,16 +913,17 @@
     };
 
     function btlBgAnim(dt) {
-        var img = blurAnim._cv;
+        var tile = sprite.sheet.btl1.tile.bg;
         var fb = btlBgAnim._fb;
-        var pc = dt / btlBgAnim.q.td;
+        fb.cx.save();
+        fb.cx.translate(fb.cv.width, (-56 * (btlBgAnim.q.td - dt) / btlBgAnim.q.td | 0));
+        fb.cx.rotate(Math.PI / 2);
         fb.cx.drawImage(
-            img,
-            0,
-            (fb.cv.height * -0.5 * pc) | 0,
-            fb.cv.width,
-            (fb.cv.height * 1.5) | 0
+            sprite.sheet.btl1.img,
+            tile.x, tile.y, tile.w, tile.h,
+            0, 0, fb.cv.height, fb.cv.width
         );
+        fb.cx.restore();
     }
     btlBgAnim.rst = function(fb) {
         btlBgAnim._fb = fb;
@@ -1169,6 +1171,8 @@
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
+        enemy1.rx = enemy1.tile.w >> 1;
+        enemy1.ry = (enemy1.tile.h * 0.75) | 0;
     };
     enemy1.opts = [missileAct, missileAct, missileAct, laserBeamAct, laserBeamAct, lightningBeamAct];
 
@@ -1237,6 +1241,8 @@
             hero.mirV = false;
             hero.vdt = undefined;
             hero.opt = {val: 0, tgt: undefined};
+            hero.rx = hero.tile.w >> 1;
+            hero.ry = hero.tile.h >> 1;
         }
     };
 
@@ -1447,7 +1453,7 @@
     function meleeAct(src, tgt, dt) {
         var len = 500;
         var dt0 = 1000;
-        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], tgt.x[3] + tgt.tile.w, src.y[3], tgt.y[3] + tgt.tile.h);
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], tgt.x[3] + tgt.tile.w, src.y[3], tgt.y[3] + tgt.tile.h - src.tile.h);
         var dt2 = dt1 + len;
         var dt3 = dt2 + len;
         var dt4 = dt3 + len;
@@ -1465,12 +1471,12 @@
         msgDlg.show(lang.meleeAttack, 0, 2000);
 
         var confs = [
-            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h, td: dt1, abs: true},
+            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt1, abs: true},
             {x: -3, y: -2, td: dt2, abs: false},
             {x:  2, y:  2, td: dt3, abs: false},
             {x: -2, y:  1, td: dt4, abs: false},
             {x:  0, y: -3, td: dt5, abs: false},
-            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h, td: dt6, abs: true},
+            {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt6, abs: true},
         ];
         src.actFn = function(unit, dt) {
             var mydt = dt - rdt;
@@ -1709,7 +1715,7 @@
     function laserBeamAct(src, tgt, dt) {
         var dt0 = 1000;
         var dx = tgt.x[3] < src.x[3] ? -1 : 1;
-        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + (tgt.tile.h >> 1) - (src.tile.h >> 1));
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + tgt.ry - src.ry);
         var dt2 = dt1 + laserBeamAct.laser(src, tgt, dt1);
         var rdt = dt;
         msgDlg.show(lang.laserBeamAttack, 0, 2000);
@@ -1741,7 +1747,7 @@
         var flip = tgt.x[0] > src.x[0];
 
         var fn = function(dt) {
-            var y = src.y[0] + (src.tile.h >> 1) - (mid.h >> 1);
+            var y = src.y[0] + src.ry - (mid.h >> 1);
             var x0, w;
             src.fb.cx.save();
             if (flip) {
@@ -1802,9 +1808,9 @@
         q.add(fn, dt, dt2);
 
         var dx = flip ? 1 : -1;
-        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 300);
-        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 600);
-        var dt3 = dt1 + 900 + pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 900);
+        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 300);
+        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 600);
+        var dt3 = dt1 + 900 + pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 900);
         units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt + dt1 + 300, -dx * (tgt.tile.w >> 1), -8);
 
         return dt3;
@@ -1813,7 +1819,7 @@
     function lightningBeamAct(src, tgt, dt) {
         var dt0 = 1000;
         var dx = tgt.x[3] < src.x[3] ? -1 : 1;
-        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + (tgt.tile.h >> 1) - (src.tile.h >> 1));
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + tgt.ry - src.ry);
         var dt2 = dt1 + lightningBeamAct.beam(src, tgt, dt1);
         var rdt = dt;
         msgDlg.show(lang.lightningBeamAttack, 0, 2000);
@@ -1842,7 +1848,7 @@
         var flip = tgt.x[0] > src.x[3];
 
         var fn = function(dt) {
-            var y = src.y[0] + (src.tile.h >> 1);
+            var y = src.y[0] + src.ry;
             var x0, w, df, tile;
             src.fb.cx.save();
             if (flip) {
@@ -1984,9 +1990,9 @@
         q.add(fn, dt, dt3);
 
         var dx = flip ? 1 : -1;
-        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 300);
-        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 600);
-        pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 900);
+        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 300);
+        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 600);
+        pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + tgt.ry - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb0_b, dt + dt1 + 900);
         units.chgHp(tgt, ((-80 - prng(40)) * src.str) | 0, dt + dt1 + 900, -dx * (tgt.tile.w >> 1), -8);
 
         return dt3;
@@ -2260,12 +2266,14 @@
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
         msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
-        enemy1.rst(scn.fb2, 32, 48, 1900);
+        var tile = sprite.sheet.btl1.tile.e0;
+        var uy = scn.fb1.cv.height >> 1;
+        enemy1.rst(scn.fb2, (scn.fb1.cv.width >> 2) - (tile.w >> 1), uy - (tile.h * 0.75) | 0, 1900);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
-        // y = ( 240(framebuffer height) - 48(bottom dialog) - 72(top padding) ) / 4(divisions) * X (hero position) + 72(top padding) - 24(hero height)
-        hero1.rst(scn.fb2, ((scn.fb1.cv.width * 0.75) | 0) - 7, -7, 70, 900);
-        hero2.rst(scn.fb2, (scn.fb1.cv.width * 0.75) | 0, 0, (((scn.fb1.cv.height - 56 - 70) * 0.25) | 0) + 70, 900);
-        hero3.rst(scn.fb2, ((scn.fb1.cv.width * 0.75) | 0) + 7, 7, (((scn.fb1.cv.height - 56 - 70) * 0.5) | 0) + 70, 900);
+        tile = sprite.sheet.btl1.tile.h0_a0;
+        hero1.rst(scn.fb2, ((scn.fb1.cv.width * 0.75) | 0) - 7, -7, uy - tile.h, 900);
+        hero2.rst(scn.fb2, (scn.fb1.cv.width * 0.75) | 0, 0, (((uy - 56) * 0.4) | 0) + uy - tile.h, 900);
+        hero3.rst(scn.fb2, ((scn.fb1.cv.width * 0.75) | 0) + 7, 7, (((uy - 56) * 0.8) | 0) + uy - tile.h, 900);
         heroDlg.rst(scn.fb3, 96, scn.fb3.cv.height - 56, scn.fb3.cv.width - 96, 56, [hero1, hero2, hero3]);
         heroOptDlg.rst(scn.fb3, 8, scn.fb3.cv.height - 56, 80, 56);
         q.add(enemyDlg, 0, 0);
