@@ -628,7 +628,19 @@
     };
     FB.prototype.flush = function() {
         this._cx.clearRect(0, 0, this._cv.width, this._cv.height);
-        this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
+        if (FB.rel) {
+            if (this.cv.width / this.cv.height > this._cv.width / this._cv.height) {
+                var h = (this._cv.width * this.cv.height / this.cv.width) | 0;
+                var y = (this._cv.height - h) >> 1;
+                this._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, 0, y, this._cv.width, h);
+            } else {
+                var w = (this._cv.height * this.cv.width / this.cv.height) | 0;
+                var x = (this._cv.width - w) >> 1;
+                this._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, x, 0, w, this._cv.height);
+            }
+        } else {
+            this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
+        }
         if (db.val && this._dcv) {
             this._dcx.clearRect(0, 0, this._dcv.width, this._dcv.height);
             this._dcx.drawImage(this.cv, 0, 0, this._dcv.width, this._dcv.height);
@@ -648,6 +660,8 @@
         FB.resize();
         FB.clr();
         FB.flush();
+        document.body.appendChild(FB._screen);
+        FB._screen.style.display = 'block';
         for (var i = 0; i < FB._lst.length; i++) {
             document.body.appendChild(FB._lst[i]._cv);
         }
@@ -656,6 +670,10 @@
         for (var i = 0; i < FB._lst.length; i++) {
             document.body.removeChild(FB._lst[i]._cv);
         }
+        document.body.removeChild(FB._screen);
+    };
+    FB.screen = function(val) {
+        FB._screen.style.display = val ? 'block' : 'none';
     };
     FB.resize = function() {
         for (var i = 0; i < FB._lst.length; i++) {
@@ -664,6 +682,14 @@
         }
     };
     FB._lst = [];
+    FB._screen = document.createElement('div');
+    FB._screen.style.backgroundColor = 'black';
+    FB._screen.style.position = 'fixed';
+    FB._screen.style.left = 0;
+    FB._screen.style.top = 0;
+    FB._screen.style.width = '100%';
+    FB._screen.style.height = '100%';
+    FB.rel = false;
     window.addEventListener('resize', FB.resize);
 
     function io(e) {
@@ -711,6 +737,9 @@
         right: 39,
         down: 40,
         0: 48,
+        1: 49,
+        2: 50,
+        3: 51,
         9: 57,
         a: 65,
         b: 66
@@ -740,6 +769,12 @@
         var cx = scn.fb3.cx;
         if (io.kb[0] === io.raw) {
             dc._st = (dc._st + 1) % 3;
+        } else if (io.kb[1] === io.raw) {
+            scn.fb1._cv.style.display = 'none' === scn.fb1._cv.style.display ? 'block' : 'none';
+        } else if (io.kb[2] === io.raw) {
+            scn.fb2._cv.style.display = 'none' === scn.fb2._cv.style.display ? 'block' : 'none';
+        } else if (io.kb[3] === io.raw) {
+            scn.fb3._cv.style.display = 'none' === scn.fb3._cv.style.display ? 'block' : 'none';
         } else if (io.kb[9] === io.raw) {
             dc._st = (dc._st + 2) % 3;
         }
@@ -851,6 +886,7 @@
     }
     loadScn.rst = function(cv) {
         q.rst();
+        FB.rel = false;
         scn.fb2.clr();
         blurAnim.rst(scn.fb1, cv);
         q.add(blurAnim, 0, 2000);
@@ -2047,6 +2083,7 @@
     }
     btlScn.rst = function() {
         q.rst();
+        FB.rel = true;
         units.end = false;
         btlScn._st = 0;
         btlScn._prv = undefined;
@@ -2080,6 +2117,8 @@
     }
     exitScn.rst = function() {
         q.rst();
+        FB.rel = false;
+        FB.screen(false);
         scn.fb1.clr();
         scn.fb2.clr();
         fadeAnim.rst(scn.fb3, true, false);
