@@ -47,7 +47,8 @@
         laserBeamAttack: 'Magitek Laser',
         cure: 'Cure',
         revive: 'Revive',
-        ko: 'Defeated is your party.'
+        ko: 'Defeated is your party.',
+        win: 'A winner is you.'
     };
 
     var sprite = {
@@ -583,6 +584,18 @@
             q.size--;
         }
     };
+    q.dt = function(fn) {
+        if (undefined === fn.q) {
+            return 0;
+        }
+        if (undefined === q._lst[fn.q.id]) {
+            return 0;
+        }
+        return tick.ts - fn.q.ts;
+    };
+    q.isDone = function(fn) {
+        return undefined === fn.q || undefined === q._lst[fn.q.id];
+    };
     q.rst = function() {
         q._lst = [];
         q.size = 0;
@@ -793,19 +806,20 @@
             a = 1 - a;
         }
         var fb = fadeAnim._fb;
-        fb.cx.fillStyle = 'rgba(0,0,0,' + a + ')';
+        fb.cx.fillStyle = fadeAnim._pref + a + ')';
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
         var g = fb.cx.createRadialGradient(fadeAnim._x, fadeAnim._y, 0, fadeAnim._x, fadeAnim._y, fadeAnim._r);
-        g.addColorStop(0, 'rgba(0,0,0,0)');
-        g.addColorStop(0.8, 'rgba(0,0,0,' + a + ')');
+        g.addColorStop(0, fadeAnim._pref + '0)');
+        g.addColorStop(0.8, fadeAnim._pref + a + ')');
         fb.cx.fillStyle = g;
         fb.cx.fillRect(0, 0, fb.cv.width, fb.cv.height);
     }
-    fadeAnim.rst = function(fb, fade_in) {
+    fadeAnim.rst = function(fb, fadeIn, isWhite) {
         fadeAnim._fb = fb;
-        fadeAnim._in = fade_in;
+        fadeAnim._in = fadeIn;
         fadeAnim._x = fb.cv.width >> 1;
         fadeAnim._y = fb.cv.height >> 1;
+        fadeAnim._pref = isWhite ? 'rgba(255,255,255,' : 'rgba(0,0,0,';
         fadeAnim._r = Math.sqrt(fadeAnim._x * fadeAnim._x + fadeAnim._y * fadeAnim._y);
     };
 
@@ -840,7 +854,7 @@
         scn.fb2.clr();
         blurAnim.rst(scn.fb1, cv);
         q.add(blurAnim, 0, 2000);
-        fadeAnim.rst(scn.fb3, false);
+        fadeAnim.rst(scn.fb3, false, false);
         q.add(fadeAnim, 0, 2000);
     };
 
@@ -861,10 +875,11 @@
     };
 
     var units = {
-        end: undefined,
+        end: false,
         rdy: [],
         act: function(unit, dt) {
             if (units.end) {
+                unit.actFn = undefined;
                 return;
             }
             if (0 >= unit.chp) {
@@ -932,7 +947,7 @@
             var fn0 = function() {
                 if (0 === unit.chp && 0 < amt) {
                     unit.act = 0;
-                    unit.actDt = tick.ts - unit.q.ts;
+                    unit.actDt = q.dt(unit);
                     unit.actFn = undefined;
                 }
                 unit.chp += amt;
@@ -1037,12 +1052,50 @@
                 enemy1.opts[prng(enemy1.opts.length)](enemy1, tgt, dt);
             }
         }
+        if (undefined !== enemy1.ddt) {
+            var mydt = dt - enemy1.ddt;
+            if (2000 <= mydt) {
+                units.hurt(enemy1, mydt);
+            }
+            enemy1.fb.cx.save();
+            if (6000 <= mydt) {
+                var a = (10000 - mydt) / 4000;
+                if (0 > a) {
+                    a = 0;
+                }
+                enemy1.fb.cx.globalAlpha = a;
+            }
+        }
         enemy1.fb.cx.drawImage(sprite.sheet.btl1.img, tile.x, tile.y, tile.w, tile.h, enemy1.x[0], enemy1.y[0], tile.w, tile.h);
+        if (undefined !== enemy1.ddt) {
+            var mydt = dt - enemy1.ddt;
+            var r0 = 255, g0 = 255, b0 = 255;
+            var r1 = 255, g1 = 0, b1 = 0;
+            var r, g, b;
+            if (10000 <= mydt) {
+                r = r1;
+                g = g1;
+                b = b1;
+            } else if (2000 <= mydt) {
+                r = ((mydt - 2000) / 8000 * (r1 - r0) + r0) | 0;
+                g = ((mydt - 2000) / 8000 * (g1 - g0) + g0) | 0;
+                b = ((mydt - 2000) / 8000 * (b1 - b0) + b0) | 0;
+            } else {
+                r = r0;
+                g = g0;
+                b = b0;
+            }
+            enemy1.fb.cx.globalCompositeOperation = 'source-atop';
+            enemy1.fb.cx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.4)';
+            enemy1.fb.cx.fillRect(enemy1.x[0], enemy1.y[0], enemy1.tile.w, enemy1.tile.h);
+            enemy1.fb.cx.restore();
+        }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 48000, 1, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.03, actDt, 24000, 1, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
+        enemy1.ddt = undefined;
     };
     enemy1.opts = [missileAct, missileAct, laserBeamAct];
 
@@ -1061,6 +1114,12 @@
                 hero.tile = hero.anim.a[((sprite.anim * (dt - hero.movDt)) | 0) % hero.anim.a.length];
             }
             hero.mirV = hero.x[0] < hero.x[2];
+            if (undefined !== hero.vdt) {
+                var f = (((dt - hero.vdt) * sprite.anim) | 0) % 3;
+                if (0 === f) {
+                    hero.tile = hero.anim.v;
+                }
+            }
             if (hero === units.rdy[0]) {
                 if (hero.actFn) {
                     hero.actFn(hero, dt);
@@ -1093,6 +1152,7 @@
             hero.nam = name;
             hero.anim = anim;
             hero.mirV = false;
+            hero.vdt = undefined;
         }
     };
 
@@ -1930,27 +1990,66 @@
     function btlScn() {
         scn.fb2.clr();
         scn.fb3.clr();
-        if (1 === units.end) {
-            if (4000 <= tick.ts - msgDlg.q.ts && io.raw) {
+        if (1 === btlScn._st) {
+            // after 1000ms, close the dialog and fade out on key press
+            if (1000 <= q.dt(msgDlg) && io.raw) {
                 q.del(msgDlg);
-                units.end = 2;
-                fadeAnim.rst(scn.fb3, false);
+                btlScn._st = 2;
+                fadeAnim.rst(scn.fb3, false, false);
                 q.add(fadeAnim, 0, 2000);
             }
-        } else if (2 === units.end) {
-            if (fadeAnim.q.td <= tick.ts - fadeAnim.q.ts) {
+        } else if (2 === btlScn._st) {
+            // when fade out is done, advance to the exit scene
+            if (q.isDone(fadeAnim)) {
                 exitScn.rst();
                 scn.run = exitScn;
                 exitScn();
             }
-        } else if (0 === hero1.chp && 0 === hero2.chp && 0 === hero3.chp) {
-            units.end = 1;
-            msgDlg.show(lang.ko, 0, 0);
+        } else if (3 === btlScn._st) {
+            // when 1st flash finishes, start 2nd flash
+            if (q.isDone(fadeAnim)) {
+                btlScn._st = 4;
+                fadeAnim.rst(scn.fb3, true, true);
+                q.add(fadeAnim, 0, 1000);
+                enemy1.ddt = q.dt(enemy1);
+            }
+        } else if (4 === btlScn._st) {
+            // after 10000ms, display dialog
+            if (10000 <= q.dt(enemy1) - enemy1.ddt) {
+                btlScn._st = 1;
+                msgDlg.show(lang.win, 0, 0);
+                if (0 < hero1.chp) {
+                    hero1.vdt = q.dt(hero1);
+                }
+                if (0 < hero2.chp) {
+                    hero2.vdt = q.dt(hero2);
+                }
+                if (0 < hero3.chp) {
+                    hero3.vdt = q.dt(hero3);
+                }
+            }
+        } else if (btlScn._prv !== units.rdy[0]) {
+            // when the current unit has finished executing, check for game over conditions
+            btlScn._prv = units.rdy[0];
+            if (0 === hero1.chp && 0 === hero2.chp && 0 === hero3.chp) {
+                units.end = true;
+                units.rdy = [];
+                btlScn._st = 1;
+                msgDlg.show(lang.ko, 0, 0);
+            } else if (0 === enemy1.chp) {
+                units.end = true;
+                units.rdy = [];
+                btlScn._st = 3;
+                fadeAnim.rst(scn.fb2, true, true);
+                q.add(fadeAnim, 0, 1000);
+            }
         }
     }
     btlScn.rst = function() {
         q.rst();
-        units.end = undefined;
+        units.end = false;
+        btlScn._st = 0;
+        btlScn._prv = undefined;
         btlBgAnim.rst(scn.fb1);
         q.add(btlBgAnim, 0, 2000);
         msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
@@ -1968,7 +2067,7 @@
         q.add(hero1, 2000, 0);
         q.add(hero2, 2000, 0);
         q.add(hero3, 2000, 0);
-        fadeAnim.rst(scn.fb3, true);
+        fadeAnim.rst(scn.fb3, true, false);
         q.add(fadeAnim, 0, 1000);
     };
 
@@ -1983,7 +2082,7 @@
         q.rst();
         scn.fb1.clr();
         scn.fb2.clr();
-        fadeAnim.rst(scn.fb3, true);
+        fadeAnim.rst(scn.fb3, true, false);
         q.add(fadeAnim, 0, 1000);
     };
 
