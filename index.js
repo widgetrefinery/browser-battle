@@ -1712,10 +1712,6 @@
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], tgt.y[3] + (tgt.tile.h >> 1) - (src.tile.h >> 1));
         var dt2 = dt1 + laserBeamAct.laser(src, tgt, dt1);
         var rdt = dt;
-        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 300);
-        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 600);
-        pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt1 + 900);
-        units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt1 + 900, -dx * (tgt.tile.w >> 1), -8);
         msgDlg.show(lang.laserBeamAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1736,7 +1732,7 @@
     }
     laserBeamAct.laser = function(src, tgt, dt) {
         var dt0 = 500;
-        var dt1 = dt0 + 1000;
+        var dt1 = dt0 + 250;
         var dt2 = dt1 + 500;
         var img = sprite.sheet.btl1.img;
         var left = sprite.sheet.btl1.tile.wb1_i0;
@@ -1746,119 +1742,72 @@
 
         var fn = function(dt) {
             var y = src.y[0] + (src.tile.h >> 1) - (mid.h >> 1);
-            var x0, x1;
+            var x0, w;
+            src.fb.cx.save();
             if (flip) {
-                x0 = src.x[0] + src.tile.w + left.w;
-                x1 = src.fb.cv.width;
+                x0 = src.x[0] + src.tile.w + right.w;
+                w = src.fb.cv.width - x0;
+                src.fb.cx.translate(x0, 0);
+                src.fb.cx.scale(-1, 1);
             } else {
-                x0 = 0;
-                x1 = src.x[0] - right.w;
+                x0 = src.x[0] - right.w;
+                w = x0;
+                src.fb.cx.translate(x0, 0);
             }
             if (dt >= dt1) {
-                var w = ((dt2 - dt) / (dt2 - dt1) * (x1 - x0)) | 0;
-                if (flip) {
-                    src.fb.cx.save();
-                    src.fb.cx.translate(x0, 0);
-                    src.fb.cx.scale(-1, 1);
-                    src.fb.cx.drawImage(
-                        img,
-                        mid.x, mid.y, mid.w, mid.h,
-                        x0 - x1, y, w, mid.h
-                    );
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        x0 - x1 + w, y, right.w, right.h
-                    );
-                    src.fb.cx.restore();
-                } else {
-                    src.fb.cx.drawImage(
-                        img,
-                        mid.x, mid.y, mid.w, mid.h,
-                        x0, y, w, mid.h
-                    );
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        x0 + w, y, right.w, right.h
-                    );
-                }
+                var w2 = ((dt2 - dt) / (dt2 - dt1) * w) | 0;
+                src.fb.cx.drawImage(
+                    img,
+                    mid.x, mid.y, mid.w, mid.h,
+                    -w, y, w2, mid.h
+                );
+                src.fb.cx.drawImage(
+                    img,
+                    right.x, right.y, right.w, right.h,
+                    w2 - w, y, right.w, right.h
+                );
             } else if (dt >= dt0) {
-                if (flip) {
-                    src.fb.cx.save();
-                    src.fb.cx.translate(x0, 0);
-                    src.fb.cx.scale(-1, 1);
-                    src.fb.cx.drawImage(
-                        img,
-                        mid.x, mid.y, mid.w, mid.h,
-                        x0 - x1, y, x1 - x0, mid.h
-                    );
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        0, y, right.w, right.h
-                    );
-                    src.fb.cx.restore();
-                } else {
-                    src.fb.cx.drawImage(
-                        img,
-                        mid.x, mid.y, mid.w, mid.h,
-                        x0, y, x1 - x0, mid.h
-                    );
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        x1, y, right.w, right.h
-                    );
-                }
+                src.fb.cx.drawImage(
+                    img,
+                    mid.x, mid.y, mid.w, mid.h,
+                    -w, y, w, mid.h
+                );
+                src.fb.cx.drawImage(
+                    img,
+                    right.x, right.y, right.w, right.h,
+                    0, y, right.w, right.h
+                );
             } else {
-                var w = (dt / dt0 * (x1 - x0)) | 0;
-                if (flip) {
-                    src.fb.cx.save();
-                    src.fb.cx.translate(x0, 0);
-                    src.fb.cx.scale(-1, 1);
+                w = (dt / dt0 * w) | 0;
+                src.fb.cx.drawImage(
+                    img,
+                    left.x, left.y, left.w, left.h,
+                    -w - left.w, y, left.w, left.h
+                );
+                if (0 < w) {
                     src.fb.cx.drawImage(
                         img,
-                        left.x, left.y, left.w, left.h,
-                        -w - left.w, y, left.w, left.h
-                    );
-                    if (0 < w) {
-                        src.fb.cx.drawImage(
-                            img,
-                            mid.x, mid.y, mid.w, mid.h,
-                            -w, y, w, mid.h
-                        );
-                    }
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        0, y, right.w, right.h
-                    );
-                    src.fb.cx.restore();
-                } else {
-                    src.fb.cx.drawImage(
-                        img,
-                        left.x, left.y, left.w, left.h,
-                        x1 - w - left.w, y, left.w, left.h
-                    );
-                    if (0 < w) {
-                        src.fb.cx.drawImage(
-                            img,
-                            mid.x, mid.y, mid.w, mid.h,
-                            x1 - w, y, w, mid.h
-                        );
-                    }
-                    src.fb.cx.drawImage(
-                        img,
-                        right.x, right.y, right.w, right.h,
-                        x1, y, right.w, right.h
+                        mid.x, mid.y, mid.w, mid.h,
+                        -w, y, w, mid.h
                     );
                 }
+                src.fb.cx.drawImage(
+                    img,
+                    right.x, right.y, right.w, right.h,
+                    0, y, right.w, right.h
+                );
             }
+            src.fb.cx.restore();
         };
         q.add(fn, dt, dt2);
 
-        return dt2;
+        var dx = flip ? 1 : -1;
+        pyro2Anim(src.x[3] + dx * 120, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 300);
+        pyro2Anim(src.x[3] + dx * 170, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 600);
+        var dt3 = dt1 + pyro2Anim(src.x[3] + dx * 220, tgt.y[3] + (tgt.tile.h >> 1) - 16, 32, 32, tgt.fb.cx, sprite.sheet.btl1, sprite.sheet.btl1.anim.wb1_b, dt + dt1 + 900);
+        units.chgHp(tgt, ((-80 - prng(20)) * src.str) | 0, dt + dt1 + 300, -dx * (tgt.tile.w >> 1), -8);
+
+        return dt3;
     };
 
     function lightningBeamAct(src, tgt, dt) {
