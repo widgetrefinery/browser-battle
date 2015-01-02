@@ -2028,7 +2028,7 @@
         scn.fb3.clr();
         if (1 === btlScn._st) {
             // after 1000ms, close the dialog and fade out on key press
-            if (1000 <= q.dt(msgDlg) && io.raw) {
+            if (1000 <= q.dt(msgDlg) && (io.ok || io.back)) {
                 q.del(msgDlg);
                 btlScn._st = 2;
                 fadeAnim.rst(scn.fb3, false, false);
