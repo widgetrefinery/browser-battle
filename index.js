@@ -31,7 +31,6 @@
             return db._wn;
         }
     };
-    console.log(db.val);
 
     var lang = {
         hero1: 'Locke',
@@ -581,8 +580,12 @@
             if (0 > dt) {
                 continue;
             }
+            var rm = 0 < fn.q.td && dt > fn.q.td;
+            if (rm) {
+                dt = fn.q.td;
+            }
             fn(dt);
-            if (0 < fn.q.td && dt > fn.q.td) {
+            if (rm) {
                 delete q._lst[i];
                 q.size--;
             }
@@ -1256,7 +1259,7 @@
         }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 24000, 14, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 24000, 5, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
@@ -1406,7 +1409,7 @@
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
         var dt2 = dt1 + pyroAnim(tgt, sprite.sheet.btl1, anim, dt1);
         var rdt = dt;
-        units.chgHp(tgt, (tgt.mhp / 4) | 0, (dt2 + dt1) >> 1, -(tgt.tile.w >> 1), -8);
+        units.chgHp(tgt, (tgt.mhp / 3) | 0, (dt2 + dt1) >> 1, -(tgt.tile.w >> 1), -8);
         msgDlg.show(lang.cure, 0, 2000);
 
         src.actFn = function(unit, dt) {
@@ -1554,17 +1557,17 @@
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt3);
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt5);
         units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt2, -3 * src.tile.w, -2 * src.tile.h);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt3, 2 * src.tile.w, 2 * src.tile.h);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt3, 2 * src.tile.w, 1.5 * src.tile.h);
         units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt4, -2 * src.tile.w, 1 * src.tile.h);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt5, 0, -3 * src.tile.h);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt5, 0, -2 * src.tile.h);
         msgDlg.show(lang.meleeAttack, 0, 2000);
 
         var confs = [
             {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt1, abs: true},
             {x: -3, y: -2, td: dt2, abs: false},
-            {x:  2, y:  2, td: dt3, abs: false},
+            {x:  2, y:  1.5, td: dt3, abs: false},
             {x: -2, y:  1, td: dt4, abs: false},
-            {x:  0, y: -3, td: dt5, abs: false},
+            {x:  0, y: -2, td: dt5, abs: false},
             {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt6, abs: true},
         ];
         src.actFn = function(unit, dt) {
