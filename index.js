@@ -1317,9 +1317,9 @@
             healAct.revive(src, tgt, dt);
         }
     }
-    healAct._anim = [sprite.sheet.btl1.anim.ih_g, sprite.sheet.btl1.anim.ih_p, sprite.sheet.btl1.anim.ih_r];
     healAct.cure = function(src, tgt, dt) {
-        var anim = healAct._anim[prng(healAct._anim.length)];
+        var anim = [sprite.sheet.btl1.anim.ih_g, sprite.sheet.btl1.anim.ih_p, sprite.sheet.btl1.anim.ih_r];
+        anim = anim[prng(anim.length)];
         var dt0 = 1000;
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] - (src.tile.w * 1.5) | 0, src.y[3], src.y[3]);
         var dt2 = dt1 + pyroAnim(tgt, sprite.sheet.btl1, anim, dt1);
