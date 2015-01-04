@@ -2,7 +2,7 @@
     var pending = 0;
 
     var db = {
-        val: true,
+        val: null !== window.location.search.match(/(^\?|&)debug=ff(&|$)/),
         cv: function(w, h) {
             var wn = db.wn();
             if (!wn) {
@@ -31,6 +31,7 @@
             return db._wn;
         }
     };
+    console.log(db.val);
 
     var lang = {
         hero1: 'Locke',
