@@ -1340,7 +1340,7 @@
         }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 15000, 5, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 15000, 9, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
@@ -2297,14 +2297,16 @@
             } else if (y0 - tile.h < off) {
                 th -= off - y0 + tile.h;
             }
-            unit.fb.cx.save();
-            unit.fb.cx.globalAlpha = 0.5;
-            unit.fb.cx.drawImage(
-                sprite.sheet.btl1.img,
-                tile.x, ty, tile.w, th,
-                x, y, tile.w, th
-            );
-            unit.fb.cx.restore();
+            if (0 < th) {
+                unit.fb.cx.save();
+                unit.fb.cx.globalAlpha = 0.5;
+                unit.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    tile.x, ty, tile.w, th,
+                    x, y, tile.w, th
+                );
+                unit.fb.cx.restore();
+            }
         };
         q.add(fn, ts, len);
 
