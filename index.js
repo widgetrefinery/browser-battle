@@ -246,7 +246,7 @@
         },
         sheet: {
             hud: {
-                img: document.createElement('img'),
+                img: window.document.createElement('img'),
                 tile: {
                     wb_7: {x:   0, y:   0, w:  8, h:  8},
                     wb_8: {x:   8, y:   0, w:  1, h:  8},
@@ -263,7 +263,7 @@
                 },
                 anim: {},
                 init: function() {
-                    var cv = document.createElement('canvas');
+                    var cv = window.document.createElement('canvas');
                     cv.width = 128;
                     cv.height = 72 + 40 * 3 + 8 * 2; // 5 lines of characters + 1 line dmg text
                     var cx = cv.getContext('2d');
@@ -355,7 +355,7 @@
                 }
             },
             btl1: {
-                img: document.createElement('img'),
+                img: window.document.createElement('img'),
                 tile: {
                     // locke: active
                     h0_a0:  {x:   0, y:   0, w: 16, h: 24},
@@ -632,12 +632,12 @@
     q._id = 0;
 
     function FB(w, h) {
-        this._cv = document.createElement('canvas');
+        this._cv = window.document.createElement('canvas');
         this._cv.style.position = 'fixed';
         this._cv.style.left = 0;
         this._cv.style.top = 0;
         this._cx = this._cv.getContext('2d');
-        this.cv = document.createElement('canvas');
+        this.cv = window.document.createElement('canvas');
         this.cv.width = w;
         this.cv.height = h;
         this.cx = this.cv.getContext('2d');
@@ -689,17 +689,17 @@
         FB.resize();
         FB.clr();
         FB.flush();
-        document.body.appendChild(FB._screen);
+        window.document.body.appendChild(FB._screen);
         FB._screen.style.display = 'block';
         for (var i = 0; i < FB._lst.length; i++) {
-            document.body.appendChild(FB._lst[i]._cv);
+            window.document.body.appendChild(FB._lst[i]._cv);
         }
     };
     FB.hide = function() {
         for (var i = 0; i < FB._lst.length; i++) {
-            document.body.removeChild(FB._lst[i]._cv);
+            window.document.body.removeChild(FB._lst[i]._cv);
         }
-        document.body.removeChild(FB._screen);
+        window.document.body.removeChild(FB._screen);
     };
     FB.screen = function(val) {
         FB._screen.style.display = val ? 'block' : 'none';
@@ -711,7 +711,7 @@
         }
     };
     FB._lst = [];
-    FB._screen = document.createElement('div');
+    FB._screen = window.document.createElement('div');
     FB._screen.style.backgroundColor = 'black';
     FB._screen.style.position = 'fixed';
     FB._screen.style.left = 0;
@@ -773,7 +773,7 @@
         a: 65,
         b: 66
     };
-    document.addEventListener('keydown', io);
+    window.document.addEventListener('keydown', io);
 
     function scn() {
         if (!scn.run) {
@@ -2628,11 +2628,25 @@
         io.rst();
         loadScn.rst(cv);
         scn.run = loadScn;
-        btlScn.rst();
-        scn.run = btlScn;
         scn();
     }
-    document.addEventListener('click', function() {
-        html2canvas(document.body, {onrendered: init});
+
+    var seqLst = [io.kb.up, io.kb.up, io.kb.down, io.kb.down, io.kb.left, io.kb.right, io.kb.left, io.kb.right, io.kb.b, io.kb.a];
+    var seqPtr = 0;
+    window.document.addEventListener('keydown', function(e) {
+        if (0 < pending || scn.run || seqPtr >= seqLst.length) {
+            return;
+        }
+        if (e.which !== seqLst[seqPtr]) {
+            seqPtr = 0;
+            return;
+        }
+        seqPtr++;
+        if (seqPtr === seqLst.length) {
+            html2canvas(window.document.body, {onrendered: function(cv) {
+                seqPtr = 0;
+                init(cv);
+            }});
+        }
     });
 })();
