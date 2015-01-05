@@ -44,8 +44,9 @@
         mahouAttack: 'Flare',
         meleeAttack: 'Kaio Ken',
         missileAttack: 'Cluster Missile',
-        missileSumm: 'Air Strike',
+        summMissileAttack: 'Air Strike',
         laserBeamAttack: 'Magitek Laser',
+        summLaserBeamAttack: 'Death Ray',
         lightningBeamAttack: 'Bolt Beam',
         cure: 'Cure',
         revive: 'Revive',
@@ -1256,11 +1257,15 @@
         summ1.tile = tile;
         summ1.st = 1;
         summ1.stDt = 0;
+        summ1.x[3] = src.x[3];
+        summ1.y[3] = src.y[3];
         return dt;
     };
     summ1.rst = function(fb, movSpd) {
         units.rst(summ1, fb, 0, 0, movSpd, 0, 0, 1, 0, 'sm', sprite.sheet.btl1.tile.sum0);
         summ1.st = 0;
+        summ1.rx = summ1.tile.w >> 1;
+        summ1.ry = summ1.tile.h >> 1;
     };
 
     function enemy1(dt) {
@@ -1428,7 +1433,7 @@
     };
     hero1.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [swordAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: [missileSummAct]},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [summMissileAct]},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
 
@@ -1466,7 +1471,7 @@
     };
     hero3.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [meleeAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: [laserBeamAct]},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [summLaserBeamAct]},
         {name: lang.optHeal, tgts: [hero3, hero1, hero2], acts: [healAct]}
     ];
 
@@ -1723,20 +1728,20 @@
         ];
     };
 
-    function missileSummAct(src, tgt, dt) {
+    function summMissileAct(src, tgt, dt) {
         var dt0 = 1000;
         var dx = tgt.x[3] < src.x[3] ? -24 : 24;
         var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx, src.y[3], src.y[3]);
         var dt2 = dt1 + riseAnim(src, dt1);
         var dt3 = dt2 + summ1.start(src, tgt, dt2, sprite.sheet.btl1.tile.sum1);
-        var oneLen = missileAct.one(src, tgt, dt3, ((-25 - prng(18)) * src.str) | 0, (-0.25 * tgt.tile.w) | 0, 0);
-        missileAct.one(src, tgt, dt3 + 2 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, 0, (0.25 * tgt.tile.h) | 0);
-        missileAct.one(src, tgt, dt3 + 4 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, (0.25 * tgt.tile.w) | 0, (-0.25 * tgt.tile.h) | 0);
+        var oneLen = missileAct.one(summ1, tgt, dt3, ((-25 - prng(18)) * src.str) | 0, (-0.25 * tgt.tile.w) | 0, 0);
+        missileAct.one(summ1, tgt, dt3 + 2 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, 0, (0.25 * tgt.tile.h) | 0);
+        missileAct.one(summ1, tgt, dt3 + 4 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, (0.25 * tgt.tile.w) | 0, (-0.25 * tgt.tile.h) | 0);
         var dt4 = dt3 + oneLen[0];
         var dt5 = dt3 + oneLen[1] + 4 / sprite.anim;
         var dt6 = dt5 + 500;
         var rdt = dt;
-        msgDlg.show(lang.missileSumm, 0, 2000);
+        msgDlg.show(lang.summMissileAttack, 0, 2000);
 
         src.actFn = function(unit, dt) {
             var mydt = dt - rdt;
@@ -1913,6 +1918,37 @@
 
         return [dt2, dt3 + (2 / sprite.anim) | 0];
     };
+
+    function summLaserBeamAct(src, tgt, dt) {
+        var dt0 = 1000;
+        var dx = tgt.x[3] < src.x[3] ? -1 : 1;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], src.y[3]);
+        var dt2 = dt1 + riseAnim(src, dt1);
+        var dt3 = dt2 + summ1.start(src, tgt, dt2, sprite.sheet.btl1.tile.sum2);
+        var dt4 = dt3 + laserBeamAct.laser(summ1, tgt, dt3);
+        var dt5 = dt4 + 500;
+        var rdt = dt;
+        msgDlg.show(lang.summLaserBeamAttack, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt5) {
+                units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+            } else if (mydt >= dt3 + 250) {
+                units.hurt(tgt, mydt - dt3 - 250);
+                if (mydt >= dt4 && 1 === summ1.st) {
+                    summ1.st = 2;
+                    summ1.stDt = q.dt(summ1);
+                }
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.v;
+                }
+            }
+        };
+    }
 
     function laserBeamAct(src, tgt, dt) {
         var dt0 = 1000;
