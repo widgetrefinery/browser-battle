@@ -44,6 +44,7 @@
         mahouAttack: 'Flare',
         meleeAttack: 'Kaio Ken',
         missileAttack: 'Cluster Missile',
+        missileSumm: 'Air Strike',
         laserBeamAttack: 'Magitek Laser',
         lightningBeamAttack: 'Bolt Beam',
         cure: 'Cure',
@@ -506,7 +507,11 @@
                     pf5:    {x:  32, y: 256, w: 32, h: 32},
                     pf6:    {x:   0, y: 288, w: 32, h: 32},
                     pf7:    {x:  32, y: 288, w: 32, h: 32},
-                    bg:     {x: 192, y:   0, w: 144, h: 240}
+                    // misc
+                    bg:     {x: 192, y:   0, w: 144, h: 240},
+                    sum0:   {x: 144, y: 256, w: 64, h: 64},
+                    sum1:   {x: 208, y: 256, w: 64, h: 64},
+                    sum2:   {x: 272, y: 256, w: 64, h: 64},
                 },
                 anim: {},
                 init: function() {
@@ -1188,6 +1193,76 @@
         }
     };
 
+    function summ1(dt) {
+        units.mov(summ1, dt);
+        if (1 === summ1.st) {
+            summ1.fb.cx.save();
+            summ1.fb.cx.globalAlpha = 0.4;
+            summ1.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                summ1.tile.x, summ1.tile.y, summ1.tile.w, summ1.tile.h,
+                summ1.x[0], summ1.y[0], summ1.tile.w, summ1.tile.h
+            );
+            summ1.fb.cx.restore();
+
+            var y = (dt - summ1.movDt + 2 / sprite.anim) | 0;
+            y = summ1.y[1] + (summ1.movSpd * y) | 0;
+            if (y >= summ1.y[1]) {
+                if (y > summ1.y[2]) {
+                    y = summ1.y[2];
+                }
+                summ1.fb.cx.save();
+                summ1.fb.cx.globalAlpha = 0.6;
+                summ1.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    summ1.tile.x, summ1.tile.y, summ1.tile.w, summ1.tile.h,
+                    summ1.x[0], y, summ1.tile.w, summ1.tile.h
+                );
+                summ1.fb.cx.restore();
+            }
+
+            y = (dt - summ1.movDt + 4 / sprite.anim) | 0;
+            y = summ1.y[1] + (summ1.movSpd * y) | 0;
+            if (y >= summ1.y[1]) {
+                if (y > summ1.y[2]) {
+                    y = summ1.y[2];
+                }
+                summ1.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    summ1.tile.x, summ1.tile.y, summ1.tile.w, summ1.tile.h,
+                    summ1.x[0], y, summ1.tile.w, summ1.tile.h
+                );
+            }
+        } else if (2 === summ1.st) {
+            var amt = (dt - summ1.stDt) / 500;
+            if (1 >= amt) {
+                summ1.fb.cx.save();
+                summ1.fb.cx.globalAlpha = 1 - amt;
+                summ1.fb.cx.drawImage(
+                    sprite.sheet.btl1.img,
+                    summ1.tile.x, summ1.tile.y, summ1.tile.w, summ1.tile.h,
+                    (summ1.x[0] - summ1.tile.w * amt / 2) | 0,
+                    (summ1.y[0] - summ1.tile.h * amt / 2) | 0,
+                    (summ1.tile.w + summ1.tile.w * amt) | 0,
+                    (summ1.tile.h + summ1.tile.h * amt) | 0
+                );
+                summ1.fb.cx.restore();
+            }
+        }
+    }
+    summ1.start = function(src, tgt, ts, tile) {
+        var dt = units.movRst(summ1, ts, src.x[2] - tile.w, src.x[2] - tile.w, -tile.h, tgt.y[3] + tgt.ry - (tile.h >> 1));
+        summ1.str = src.str;
+        summ1.tile = tile;
+        summ1.st = 1;
+        summ1.stDt = 0;
+        return dt;
+    };
+    summ1.rst = function(fb, movSpd) {
+        units.rst(summ1, fb, 0, 0, movSpd, 0, 0, 1, 0, 'sm', sprite.sheet.btl1.tile.sum0);
+        summ1.st = 0;
+    };
+
     function enemy1(dt) {
         units.act(enemy1, dt);
         units.mov(enemy1, dt);
@@ -1353,7 +1428,7 @@
     };
     hero1.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [swordAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: [missileAct]},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [missileSummAct]},
         {name: lang.optHeal, tgts: [hero1, hero2, hero3], acts: [healAct]}
     ];
 
@@ -1646,6 +1721,41 @@
             (tgt.x[0] + (tgt.tile.w >> 1) + src.tile.w * conf1.x) | 0,
             (tgt.y[0] + (tgt.tile.h >> 1) + src.tile.h * conf1.y) | 0
         ];
+    };
+
+    function missileSummAct(src, tgt, dt) {
+        var dt0 = 1000;
+        var dx = tgt.x[3] < src.x[3] ? -24 : 24;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx, src.y[3], src.y[3]);
+        var dt2 = dt1 + riseAnim(src, dt1);
+        var dt3 = dt2 + summ1.start(src, tgt, dt2, sprite.sheet.btl1.tile.sum1);
+        var oneLen = missileAct.one(src, tgt, dt3, ((-25 - prng(18)) * src.str) | 0, (-0.25 * tgt.tile.w) | 0, 0);
+        missileAct.one(src, tgt, dt3 + 2 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, 0, (0.25 * tgt.tile.h) | 0);
+        missileAct.one(src, tgt, dt3 + 4 / sprite.anim, ((-25 - prng(18)) * src.str) | 0, (0.25 * tgt.tile.w) | 0, (-0.25 * tgt.tile.h) | 0);
+        var dt4 = dt3 + oneLen[0];
+        var dt5 = dt3 + oneLen[1] + 4 / sprite.anim;
+        var dt6 = dt5 + 500;
+        var rdt = dt;
+        msgDlg.show(lang.missileSumm, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt5) {
+                units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+            } else if (mydt >= dt4) {
+                units.hurt(tgt, mydt - dt4);
+                if (1 === summ1.st) {
+                    summ1.st = 2;
+                    summ1.stDt = q.dt(summ1);
+                }
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.v;
+                }
+            }
+        };
     };
 
     function missileAct(src, tgt, dt) {
@@ -2090,6 +2200,49 @@
         return dt3;
     };
 
+    function riseAnim(unit, ts) {
+        var sheet = sprite.sheet.btl1;
+        var tile = [sheet.tile.rb_g, sheet.tile.rb_p, sheet.tile.rb_r, sheet.tile.rb_w];
+        tile = tile[prng(tile.length)];
+        var len = riseAnim.one(unit, -(unit.tile.w * 0.75) | 0, -6, ts, tile);
+        riseAnim.one(unit, (unit.tile.w * 0.75) | 0, 6, ts, tile);
+        riseAnim.one(unit, -(unit.tile.w * 0.5) | 0, 6, ts, tile);
+        riseAnim.one(unit, (unit.tile.w * 0.5) | 0, -6, ts, tile);
+        return len;
+    }
+    riseAnim.one = function(unit, dx, dy, ts, tile) {
+        var len = 750;
+        var y0 = tile.h;
+        var y1 = -tile.h;
+        var fn = function(dt) {
+            var x = unit.x[0] + dx + (unit.tile.w >> 1) - (tile.w >> 1);
+            var y = unit.y[0] + dy + unit.tile.h - tile.h;
+            var ty = tile.y;
+            var th = tile.h;
+            var off = (dt / len * (y1 - y0) + y0) | 0;
+            if (0 < off) {
+                y += off;
+            }
+            if (0 > off) {
+                ty -= off;
+                th += off;
+            } else if (y0 - tile.h < off) {
+                th -= off - y0 + tile.h;
+            }
+            unit.fb.cx.save();
+            unit.fb.cx.globalAlpha = 0.5;
+            unit.fb.cx.drawImage(
+                sprite.sheet.btl1.img,
+                tile.x, ty, tile.w, th,
+                x, y, tile.w, th
+            );
+            unit.fb.cx.restore();
+        };
+        q.add(fn, ts, len);
+
+        return len;
+    };
+
     function pyro2Anim(x, y, w, h, cx, sheet, anim, ts) {
         var len = anim.length / sprite.anim;
         pyro2Anim.one((x + 0.75 * w) | 0, (y + 0.25 * h) | 0, cx, sheet, anim, ts);
@@ -2374,6 +2527,8 @@
         q.add(hero1, 2000, 0);
         q.add(hero2, 2000, 0);
         q.add(hero3, 2000, 0);
+        summ1.rst(scn.fb2, 0.16);
+        q.add(summ1, 0, 0);
         fadeAnim.rst(scn.fb3, true, false);
         q.add(fadeAnim, 0, 1000);
     };
