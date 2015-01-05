@@ -48,6 +48,7 @@
         laserBeamAttack: 'Magitek Laser',
         summLaserBeamAttack: 'Death Ray',
         lightningBeamAttack: 'Bolt Beam',
+        summLightningBeamAttack: 'Mega Cannon',
         cure: 'Cure',
         revive: 'Revive',
         ko: 'Your team passed out.',
@@ -1339,7 +1340,7 @@
         }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 24000, 5, 'en', sprite.sheet.btl1.tile.e0);
+        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 15000, 5, 'en', sprite.sheet.btl1.tile.e0);
         units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
@@ -1452,7 +1453,7 @@
     };
     hero2.opts = [
         {name: lang.optAttack, tgts: [enemy1], acts: [mahouAct]},
-        {name: lang.optSpecial, tgts: [enemy1], acts: [lightningBeamAct]},
+        {name: lang.optSpecial, tgts: [enemy1], acts: [summLightningBeamAct]},
         {name: lang.optHeal, tgts: [hero2, hero3, hero1], acts: [healAct]}
     ];
 
@@ -2054,6 +2055,37 @@
         return dt3;
     };
 
+    function summLightningBeamAct(src, tgt, dt) {
+        var dt0 = 1000;
+        var dx = tgt.x[3] < src.x[3] ? -1 : 1;
+        var dt1 = dt0 + units.movRst(src, dt0, src.x[3], src.x[3] + dx * 24, src.y[3], src.y[3]);
+        var dt2 = dt1 + riseAnim(src, dt1);
+        var dt3 = dt2 + summ1.start(src, tgt, dt2, sprite.sheet.btl1.tile.sum0);
+        var dt4 = dt3 + lightningBeamAct.beam(summ1, tgt, dt3);
+        var dt5 = dt4 + 500;
+        var rdt = dt;
+        msgDlg.show(lang.summLightningBeamAttack, 0, 2000);
+
+        src.actFn = function(unit, dt) {
+            var mydt = dt - rdt;
+            if (mydt >= dt5) {
+                units.actRst(unit, dt);
+                units.movInst(tgt, tgt.x[3], tgt.y[3]);
+                units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+            } else if (mydt >= dt3 + 250) {
+                units.hurt(tgt, mydt - dt3 - 250);
+                if (mydt >= dt4 && 1 === summ1.st) {
+                    summ1.st = 2;
+                    summ1.stDt = q.dt(summ1);
+                }
+            } else if (mydt >= dt1) {
+                if (undefined !== unit.anim) {
+                    unit.tile = unit.anim.v;
+                }
+            }
+        };
+    }
+
     function lightningBeamAct(src, tgt, dt) {
         var dt0 = 1000;
         var dx = tgt.x[3] < src.x[3] ? -1 : 1;
@@ -2072,7 +2104,7 @@
                 if (undefined !== unit.anim) {
                     unit.tile = unit.anim.a[1];
                 }
-                if (mydt >= dt1 + 25) {
+                if (mydt >= dt1 + 250) {
                     units.hurt(tgt, mydt - dt1 - 250);
                 }
             }
