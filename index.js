@@ -636,6 +636,7 @@
         this._cv.style.position = 'fixed';
         this._cv.style.left = 0;
         this._cv.style.top = 0;
+        this._cv.style.zIndex = 9999;
         this._cx = this._cv.getContext('2d');
         this.cv = window.document.createElement('canvas');
         this.cv.width = w;
@@ -718,6 +719,7 @@
     FB._screen.style.top = 0;
     FB._screen.style.width = '100%';
     FB._screen.style.height = '100%';
+    FB._screen.style.zIndex = 9998;
     FB.rel = false;
     window.addEventListener('resize', FB.resize);
 
@@ -1386,7 +1388,7 @@
                     var opt = hero.opts[hero.opt.val];
                     if (0 < opt.acts.length) {
                         var act = opt.acts[prng(opt.acts.length)];
-                        if (0 < opt.tgts[hero.opt.tgt].chp) {
+                        if ('en' !== opt.tgts[hero.opt.tgt].type || 0 < opt.tgts[hero.opt.tgt].chp) {
                             act(hero, opt.tgts[hero.opt.tgt], dt);
                             hero.opt.tgt = undefined;
                         } else {
