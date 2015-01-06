@@ -392,7 +392,7 @@
                     h2_v:   {x: 112, y:  48, w: 16, h: 24},
                     // air force
                     e0:     {x:   0, y:  72, w: 96, h: 96, rx: 48, ry: 72},
-                     // weapon slash: sword
+                    // weapon slash: sword
                     ws_s0:  {x:  96, y:  72, w: 32, h: 48},
                     ws_s1:  {x: 128, y:  72, w: 32, h: 48},
                     ws_s2:  {x: 160, y:  72, w: 32, h: 48},
@@ -2123,7 +2123,7 @@
         var dt0 = 250; // extend
         var dt1 = dt0 + (3 / sprite.anim) | 0; // widen
         var dt2 = dt1 + (4 * sprite.sheet.btl1.anim.wb0_i.length / sprite.anim) | 0; // cycle
-        var dt3 = dt2 + (8 / sprite.anim) | 0; //shrink
+        var dt3 = dt2 + (8 / sprite.anim) | 0; // shrink
         var flip = tgt.x[0] > src.x[3];
 
         var fn = function(dt) {
