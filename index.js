@@ -391,7 +391,7 @@
                     h2_p:   {x:  96, y:  48, w: 16, h: 24},
                     h2_v:   {x: 112, y:  48, w: 16, h: 24},
                     // air force
-                    e0:     {x:   0, y:  72, w: 96, h: 96},
+                    e0:     {x:   0, y:  72, w: 96, h: 96, rx: 48, ry: 72},
                      // weapon slash: sword
                     ws_s0:  {x:  96, y:  72, w: 32, h: 48},
                     ws_s1:  {x: 128, y:  72, w: 32, h: 48},
@@ -511,9 +511,9 @@
                     pf7:    {x:  32, y: 288, w: 32, h: 32},
                     // misc
                     bg:     {x: 192, y:   0, w: 144, h: 240},
-                    sum0:   {x: 144, y: 256, w: 64, h: 64},
-                    sum1:   {x: 208, y: 256, w: 64, h: 64},
-                    sum2:   {x: 272, y: 256, w: 64, h: 64},
+                    sum0:   {x: 144, y: 256, w: 64, h: 64, rx:  5, ry: 48},
+                    sum1:   {x: 208, y: 256, w: 64, h: 64, rx: 25, ry: 32},
+                    sum2:   {x: 272, y: 256, w: 64, h: 64, rx: 10, ry: 13},
                 },
                 anim: {},
                 init: function() {
@@ -1253,9 +1253,11 @@
         }
     }
     summ1.start = function(src, tgt, ts, tile) {
-        var dt = units.movRst(summ1, ts, src.x[2] - tile.w, src.x[2] - tile.w, -tile.h, tgt.y[3] + tgt.ry - (tile.h >> 1));
+        var dt = units.movRst(summ1, ts, src.x[2] - tile.w, src.x[2] - tile.w, -tile.h, tgt.y[3] + tgt.ry - tile.ry);
         summ1.str = src.str;
         summ1.tile = tile;
+        summ1.rx = summ1.tile.rx;
+        summ1.ry = summ1.tile.ry;
         summ1.st = 1;
         summ1.stDt = 0;
         summ1.x[3] = src.x[3];
@@ -1340,14 +1342,15 @@
         }
     }
     enemy1.rst = function(fb, x, y, actDt) {
-        units.rst(enemy1, fb, x, y, 0.32, 0.015, actDt, 15000, 9, 'en', sprite.sheet.btl1.tile.e0);
-        units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, x, y, y);
+        var tile = sprite.sheet.btl1.tile.e0;
+        units.rst(enemy1, fb, x - tile.rx, y - tile.ry, 0.32, 0.015, actDt, 15000, 9, 'en', tile);
+        units.movRst(enemy1, 0, -32 - sprite.sheet.btl1.tile.e0.w, enemy1.x[3], enemy1.y[3], enemy1.y[3]);
         enemy1.nam = lang.enemy1;
         enemy1.ddt = undefined;
-        enemy1.rx = enemy1.tile.w >> 1;
-        enemy1.ry = (enemy1.tile.h * 0.75) | 0;
+        enemy1.rx = enemy1.tile.rx;
+        enemy1.ry = enemy1.tile.ry;
     };
-    enemy1.opts = [missileAct, missileAct, missileAct, laserBeamAct, laserBeamAct, lightningBeamAct];
+    enemy1.opts = [missileAct, missileAct, laserBeamAct, lightningBeamAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1637,18 +1640,18 @@
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt1);
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt3);
         pyroAnim(src, sprite.sheet.btl1, sprite.sheet.btl1.anim.ps, dt5);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt2, -3 * src.tile.w, -2 * src.tile.h);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt3, 2 * src.tile.w, 1.5 * src.tile.h);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt4, -2 * src.tile.w, 1 * src.tile.h);
-        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt5, 0, -2 * src.tile.h);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt2, (-1.5 * src.tile.w) | 0, -src.tile.h);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt3, src.tile.w, (0.75 * src.tile.h) | 0);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt4, -src.tile.w, src.tile.h >> 1);
+        units.chgHp(tgt, ((-15 - prng(15)) * src.str) | 0, dt5, 0, -src.tile.h);
         msgDlg.show(lang.meleeAttack, 0, 2000);
 
         var confs = [
             {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt1, abs: true},
-            {x: -3, y: -2, td: dt2, abs: false},
-            {x:  2, y:  1.5, td: dt3, abs: false},
-            {x: -2, y:  1, td: dt4, abs: false},
-            {x:  0, y: -2, td: dt5, abs: false},
+            {x: -1.5, y: -1, td: dt2, abs: false},
+            {x:  1, y:  0.75, td: dt3, abs: false},
+            {x: -1, y:  0.5, td: dt4, abs: false},
+            {x:  0, y: -1, td: dt5, abs: false},
             {x: tgt.x[3] + tgt.tile.w, y: tgt.y[3] + tgt.tile.h - src.tile.h, td: dt6, abs: true},
         ];
         src.actFn = function(unit, dt) {
@@ -1824,8 +1827,8 @@
 
         var fn = function(dt) {
             if (undefined === x0) {
-                x0 = src.x[0] + (src.tile.w >> 1);
-                y0 = src.y[0] + (src.tile.h >> 1);
+                x0 = src.x[0] + src.rx;
+                y0 = src.y[0] + src.ry;
                 y1 = y0 + 16;
                 x2 = tgt.x[0] + (tgt.tile.w >> 1) + tx;
                 y2 = tgt.y[0] + (tgt.tile.h >> 1) + ty;
@@ -1987,16 +1990,15 @@
 
         var fn = function(dt) {
             var y = src.y[0] + src.ry - (mid.h >> 1);
-            var x0, w;
+            var x0 = src.x[0] + src.rx;
+            var w;
             src.fb.cx.save();
             if (flip) {
-                x0 = src.x[0] + src.tile.w + right.w;
-                w = src.fb.cv.width - x0;
+                w = src.fb.cv.width - x0 - right.w;
                 src.fb.cx.translate(x0, 0);
                 src.fb.cx.scale(-1, 1);
             } else {
-                x0 = src.x[0] - right.w;
-                w = x0;
+                w = x0 - right.w;
                 src.fb.cx.translate(x0, 0);
             }
             if (dt >= dt1) {
@@ -2004,42 +2006,42 @@
                 src.fb.cx.drawImage(
                     img,
                     mid.x, mid.y, mid.w, mid.h,
-                    -w, y, w2, mid.h
+                    -right.w - w, y, w2, mid.h
                 );
                 src.fb.cx.drawImage(
                     img,
                     right.x, right.y, right.w, right.h,
-                    w2 - w, y, right.w, right.h
+                    w2 - right.w - w, y, right.w, right.h
                 );
             } else if (dt >= dt0) {
                 src.fb.cx.drawImage(
                     img,
                     mid.x, mid.y, mid.w, mid.h,
-                    -w, y, w, mid.h
+                    -right.w - w, y, w, mid.h
                 );
                 src.fb.cx.drawImage(
                     img,
                     right.x, right.y, right.w, right.h,
-                    0, y, right.w, right.h
+                    -right.w, y, right.w, right.h
                 );
             } else {
                 w = (dt / dt0 * w) | 0;
                 src.fb.cx.drawImage(
                     img,
                     left.x, left.y, left.w, left.h,
-                    -w - left.w, y, left.w, left.h
+                    -right.w - w - left.w, y, left.w, left.h
                 );
                 if (0 < w) {
                     src.fb.cx.drawImage(
                         img,
                         mid.x, mid.y, mid.w, mid.h,
-                        -w, y, w, mid.h
+                        -right.w - w, y, w, mid.h
                     );
                 }
                 src.fb.cx.drawImage(
                     img,
                     right.x, right.y, right.w, right.h,
-                    0, y, right.w, right.h
+                    -right.w, y, right.w, right.h
                 );
             }
             src.fb.cx.restore();
@@ -2119,16 +2121,15 @@
 
         var fn = function(dt) {
             var y = src.y[0] + src.ry;
-            var x0, w, df, tile;
+            var x0 = src.x[0] + src.rx;
+            var w, df, tile;
             src.fb.cx.save();
             if (flip) {
-                x0 = src.x[0] + src.tile.w;
                 w = src.fb.cv.width - x0;
                 df = -1;
                 src.fb.cx.translate(x0, 0);
                 src.fb.cx.scale(-1, 1);
             } else {
-                x0 = src.x[0];
                 w = x0;
                 df = 1;
                 src.fb.cx.translate(x0, 0);
@@ -2353,7 +2354,7 @@
                 sheet.img,
                 tile.x, tile.y, tile.w, tile.h,
                 (x + unit.tile.w * dx - (tile.w >> 1)) | 0,
-                (y + unit.tile.w * dy - (tile.h >> 1)) | 0,
+                (y + unit.tile.h * dy - (tile.h >> 1)) | 0,
                 tile.w, tile.h
             );
         };
@@ -2583,7 +2584,7 @@
         msgDlg.rst(scn.fb3, (scn.fb3.cv.width - 200) >> 1, 0, 200, 24);
         var tile = sprite.sheet.btl1.tile.e0;
         var uy = scn.fb1.cv.height >> 1;
-        enemy1.rst(scn.fb2, (scn.fb1.cv.width >> 2) - (tile.w >> 1), uy - (tile.h * 0.75) | 0, 1900);
+        enemy1.rst(scn.fb2, (scn.fb1.cv.width >> 2), uy, 1900);
         enemyDlg.rst(scn.fb3, 0, scn.fb2.cv.height - 56, 96, 56, enemy1);
         tile = sprite.sheet.btl1.tile.h0_a0;
         hero1.rst(scn.fb2, ((scn.fb1.cv.width * 0.75) | 0) - 7, -7, uy - tile.h, 900);
