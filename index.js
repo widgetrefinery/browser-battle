@@ -2641,22 +2641,29 @@
         scn();
     }
 
-    var seqLst = [io.kb.up, io.kb.up, io.kb.down, io.kb.down, io.kb.left, io.kb.right, io.kb.left, io.kb.right, io.kb.b, io.kb.a];
-    var seqPtr = 0;
-    window.document.addEventListener('keydown', function(e) {
-        if (0 < pending || scn.run || seqPtr >= seqLst.length) {
+    var done = false;
+    window.document.addEventListener('DOMContentLoaded', function() {
+        if (done) {
             return;
         }
-        if (e.which !== seqLst[seqPtr]) {
-            seqPtr = 0;
-            return;
-        }
-        seqPtr++;
-        if (seqPtr === seqLst.length) {
-            html2canvas(window.document.body, {onrendered: function(cv) {
+        done = true;
+        var seqLst = [io.kb.up, io.kb.up, io.kb.down, io.kb.down, io.kb.left, io.kb.right, io.kb.left, io.kb.right, io.kb.b, io.kb.a];
+        var seqPtr = 0;
+        window.document.addEventListener('keydown', function(e) {
+            if (0 < pending || scn.run || seqPtr >= seqLst.length) {
+                return;
+            }
+            if (e.which !== seqLst[seqPtr]) {
                 seqPtr = 0;
-                init(cv);
-            }});
-        }
+                return;
+            }
+            seqPtr++;
+            if (seqPtr === seqLst.length) {
+                html2canvas(window.document.body, {onrendered: function(cv) {
+                    seqPtr = 0;
+                    init(cv);
+                }});
+            }
+        });
     });
 })();
