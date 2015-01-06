@@ -1753,6 +1753,7 @@
                 units.actRst(unit, dt);
                 units.movInst(tgt, tgt.x[3], tgt.y[3]);
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.chgHp(src, -50, 0, -(src.tile.w >> 1), -8);
             } else if (mydt >= dt4) {
                 units.hurt(tgt, mydt - dt4);
                 if (1 === summ1.st) {
@@ -1940,6 +1941,7 @@
                 units.actRst(unit, dt);
                 units.movInst(tgt, tgt.x[3], tgt.y[3]);
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.chgHp(src, -50, 0, -(src.tile.w >> 1), -8);
             } else if (mydt >= dt3 + 250) {
                 units.hurt(tgt, mydt - dt3 - 250);
                 if (mydt >= dt4 && 1 === summ1.st) {
@@ -2074,6 +2076,7 @@
                 units.actRst(unit, dt);
                 units.movInst(tgt, tgt.x[3], tgt.y[3]);
                 units.movRst(unit, 0, unit.x[0], unit.x[3], unit.y[0], unit.y[3]);
+                units.chgHp(src, -50, 0, -(src.tile.w >> 1), -8);
             } else if (mydt >= dt3 + 250) {
                 units.hurt(tgt, mydt - dt3 - 250);
                 if (mydt >= dt4 && 1 === summ1.st) {
