@@ -1350,7 +1350,7 @@
         enemy1.rx = enemy1.tile.rx;
         enemy1.ry = enemy1.tile.ry;
     };
-    enemy1.opts = [missileAct, missileAct, laserBeamAct, lightningBeamAct];
+    enemy1.opts = [missileAct, laserBeamAct, lightningBeamAct, missileAct, laserBeamAct, lightningBeamAct];
 
     var heroes = {
         upd: function(hero, dt) {
@@ -1386,8 +1386,12 @@
                     var opt = hero.opts[hero.opt.val];
                     if (0 < opt.acts.length) {
                         var act = opt.acts[prng(opt.acts.length)];
-                        act(hero, opt.tgts[hero.opt.tgt], dt);
-                        hero.opt.tgt = undefined;
+                        if (0 < opt.tgts[hero.opt.tgt].chp) {
+                            act(hero, opt.tgts[hero.opt.tgt], dt);
+                            hero.opt.tgt = undefined;
+                        } else {
+                            units.actRst(hero, dt);
+                        }
                     } else {
                         units.actRst(hero, dt);
                     }
