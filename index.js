@@ -632,12 +632,6 @@
     q._id = 0;
 
     function FB(w, h) {
-        this._cv = window.document.createElement('canvas');
-        this._cv.style.position = 'fixed';
-        this._cv.style.left = 0;
-        this._cv.style.top = 0;
-        this._cv.style.zIndex = 9999;
-        this._cx = this._cv.getContext('2d');
         this.cv = window.document.createElement('canvas');
         this.cv.width = w;
         this.cv.height = h;
@@ -657,19 +651,20 @@
         this.cx.clearRect(0, 0, this.cv.width, this.cv.height);
     };
     FB.prototype.flush = function() {
-        this._cx.clearRect(0, 0, this._cv.width, this._cv.height);
-        if (FB.rel) {
-            if (this.cv.width / this.cv.height > this._cv.width / this._cv.height) {
-                var h = (this._cv.width * this.cv.height / this.cv.width) | 0;
-                var y = (this._cv.height - h) >> 1;
-                this._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, 0, y, this._cv.width, h);
+        if ('none' !== this.cv.style.display) {
+            if (FB.rel) {
+                if (this.cv.width / this.cv.height > FB._cv.width / FB._cv.height) {
+                    var h = (FB._cv.width * this.cv.height / this.cv.width) | 0;
+                    var y = (FB._cv.height - h) >> 1;
+                    FB._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, 0, y, FB._cv.width, h);
+                } else {
+                    var w = (FB._cv.height * this.cv.width / this.cv.height) | 0;
+                    var x = (FB._cv.width - w) >> 1;
+                    FB._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, x, 0, w, FB._cv.height);
+                }
             } else {
-                var w = (this._cv.height * this.cv.width / this.cv.height) | 0;
-                var x = (this._cv.width - w) >> 1;
-                this._cx.drawImage(this.cv, 0, 0, this.cv.width, this.cv.height, x, 0, w, this._cv.height);
+                FB._cx.drawImage(this.cv, 0, 0, FB._cv.width, FB._cv.height);
             }
-        } else {
-            this._cx.drawImage(this.cv, 0, 0, this._cv.width, this._cv.height);
         }
         if (db.val && this._dcv) {
             this._dcx.clearRect(0, 0, this._dcv.width, this._dcv.height);
@@ -682,6 +677,7 @@
         }
     };
     FB.flush = function() {
+        FB._cx.clearRect(0, 0, FB._cv.width, FB._cv.height);
         for (var i = 0; i < FB._lst.length; i++) {
             FB._lst[i].flush();
         }
@@ -692,24 +688,18 @@
         FB.flush();
         window.document.body.appendChild(FB._screen);
         FB._screen.style.display = 'block';
-        for (var i = 0; i < FB._lst.length; i++) {
-            window.document.body.appendChild(FB._lst[i]._cv);
-        }
+        window.document.body.appendChild(FB._cv);
     };
     FB.hide = function() {
-        for (var i = 0; i < FB._lst.length; i++) {
-            window.document.body.removeChild(FB._lst[i]._cv);
-        }
+        window.document.body.removeChild(FB._cv);
         window.document.body.removeChild(FB._screen);
     };
     FB.screen = function(val) {
         FB._screen.style.display = val ? 'block' : 'none';
     };
     FB.resize = function() {
-        for (var i = 0; i < FB._lst.length; i++) {
-            FB._lst[i]._cv.width = window.innerWidth;
-            FB._lst[i]._cv.height = window.innerHeight;
-        }
+        FB._cv.width = window.innerWidth;
+        FB._cv.height = window.innerHeight;
     };
     FB._lst = [];
     FB._screen = window.document.createElement('div');
@@ -720,6 +710,12 @@
     FB._screen.style.width = '100%';
     FB._screen.style.height = '100%';
     FB._screen.style.zIndex = 9998;
+    FB._cv = window.document.createElement('canvas');
+    FB._cv.style.position = 'fixed';
+    FB._cv.style.left = 0;
+    FB._cv.style.top = 0;
+    FB._cv.style.zIndex = 9999;
+    FB._cx = FB._cv.getContext('2d');
     FB.rel = false;
     window.addEventListener('resize', FB.resize);
 
@@ -801,11 +797,11 @@
         if (io.kb[0] === io.raw) {
             dc._st = (dc._st + 1) % 3;
         } else if (io.kb[1] === io.raw) {
-            scn.fb1._cv.style.display = 'none' === scn.fb1._cv.style.display ? 'block' : 'none';
+            scn.fb1.cv.style.display = 'none' === scn.fb1.cv.style.display ? 'block' : 'none';
         } else if (io.kb[2] === io.raw) {
-            scn.fb2._cv.style.display = 'none' === scn.fb2._cv.style.display ? 'block' : 'none';
+            scn.fb2.cv.style.display = 'none' === scn.fb2.cv.style.display ? 'block' : 'none';
         } else if (io.kb[3] === io.raw) {
-            scn.fb3._cv.style.display = 'none' === scn.fb3._cv.style.display ? 'block' : 'none';
+            scn.fb3.cv.style.display = 'none' === scn.fb3.cv.style.display ? 'block' : 'none';
         } else if (io.kb[9] === io.raw) {
             dc._st = (dc._st + 2) % 3;
         }
