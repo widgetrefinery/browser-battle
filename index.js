@@ -689,6 +689,7 @@
         window.document.body.appendChild(FB._screen);
         FB._screen.style.display = 'block';
         window.document.body.appendChild(FB._cv);
+        FB._screen.focus();
     };
     FB.hide = function() {
         window.document.body.removeChild(FB._cv);
@@ -710,6 +711,7 @@
     FB._screen.style.width = '100%';
     FB._screen.style.height = '100%';
     FB._screen.style.zIndex = 9998;
+    FB._screen.tabIndex = 9998;
     FB._cv = window.document.createElement('canvas');
     FB._cv.style.position = 'fixed';
     FB._cv.style.left = 0;
