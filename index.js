@@ -690,6 +690,7 @@
         FB._screen.style.display = 'block';
         window.document.body.appendChild(FB._cv);
         FB._screen.focus();
+        FB._screen.blur();
     };
     FB.hide = function() {
         window.document.body.removeChild(FB._cv);
